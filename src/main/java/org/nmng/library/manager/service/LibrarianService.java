@@ -2,6 +2,7 @@ package org.nmng.library.manager.service;
 
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
+import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
@@ -10,8 +11,11 @@ import java.util.List;
 public interface LibrarianService {
     static final String ROLE_NAME = "LIBRARIAN";
 
-    List<UserDto> getAllUsers();
-    Object getSpecifiedUser(String identifier);
-    Object createUser(CreateUserDto dto);
-    Object deleteUser(String identifier);
+    ResponseEntity<?> getAllUsers();
+
+    ResponseEntity<?> getSpecifiedUser(String identifiable);
+
+    ResponseEntity<?> createUser(CreateUserDto dto);
+
+    ResponseEntity<?> deleteUser(String identifiable);
 }

@@ -1,14 +1,11 @@
 package org.nmng.library.manager.dto.response;
 
 import lombok.Data;
-import org.nmng.library.manager.entity.Role;
 import org.nmng.library.manager.entity.User;
-import org.nmng.library.manager.entity.UserRole;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Data

@@ -1,18 +1,13 @@
 package org.nmng.library.manager.entity;
 
 import jakarta.persistence.*;
-import lombok.*;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.time.Instant;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_roles", schema = "library-manager")
-//@EntityListeners(AuditingEntityListener.class)
 @NoArgsConstructor
 @Data
 public class UserRole {

@@ -29,25 +29,30 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public List<UserDto> getAllUsers() {
-        return this.userRepository.findAll().stream().map(UserDto::new).collect(Collectors.toList());
+    public ResponseEntity<?> getAllUsers() {
+        return ResponseEntity.ok(
+                this.userRepository.findAll().stream().map(UserDto::new).collect(Collectors.toList())
+        );
     }
 
     @Override
-    public List<UserDto> getAllUsers(String role) {
+    public ResponseEntity<?>getAllUsers(String role) {
         Role specifiedRole = this.queryRole(role); // should have only 1 element
 
         if (specifiedRole == null) throw new RuntimeException("error while identifying role");
-        return this.userRepository.findByRole(specifiedRole).stream().map(UserDto::new).toList();
+
+        return ResponseEntity.ok(
+                this.userRepository.findByRole(specifiedRole).stream().map(UserDto::new).toList()
+        );
     }
 
     /**
-     * @param identifier can be any of id, identityNumber and username.
+     * @param identifiable can be any of id, identityNumber and username.
      * @return
      */
     @Override
-    public Object getSpecifiedUser(String identifier) {
-        User user = this.findUser(identifier);
+    public ResponseEntity<?> getSpecifiedUser(String identifiable) {
+        User user = this.findUser(identifiable);
 
         return user == null ?
                 ResponseEntity.notFound().build()
@@ -56,8 +61,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Object getSpecifiedUser(String identifier, Role role) {
-        User user = this.findUser(identifier, role);
+    public ResponseEntity<?>getSpecifiedUser(String identifiable, Role role) {
+        User user = this.findUser(identifiable, role);
 
         return user == null ?
                 ResponseEntity.notFound().build()
@@ -66,7 +71,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Object createUser(CreateUserDto dto) {
+    public ResponseEntity<?> createUser(CreateUserDto dto) {
         User user = this.userRepository.save(dto.toUser());
         List<Role> roles = this.queryRoles(dto.getRoles());
 
@@ -77,22 +82,22 @@ public class UserServiceImpl implements UserService {
 
         user.setRoles(userRoles);
 
-        return new UserDto(user);
+        return ResponseEntity.ok(new UserDto(user));
     }
 
     @Override
-    public Object createUser(CreateUserDto dto, Role role) {
+    public ResponseEntity<?>createUser(CreateUserDto dto, Role role) {
         User user = this.userRepository.save(dto.toUser());
         UserRole userRole = this.userRoleRepository.save(new UserRole(user, role));
 
         user.setRoles(List.of(userRole));
 
-        return new UserDto(user);
+        return ResponseEntity.ok(new UserDto(user));
     }
 
     @Override
-    public Object deleteUser(String identifier) {
-        User user = this.findUser(identifier);
+    public ResponseEntity<?> deleteUser(String identifiable) {
+        User user = this.findUser(identifiable);
 
         if (user != null) this.userRepository.delete(user);
         else return ResponseEntity.notFound().build();
@@ -101,47 +106,47 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Object deleteUser(String identifier, Role role) {
-        User user = this.findUser(identifier, role);
+    public ResponseEntity<?> deleteUser(String identifiable, Role role) {
+        User user = this.findUser(identifiable, role);
 
         if (user != null) this.userRepository.delete(user);
-        else return ResponseEntity.notFound().build();
+        else return ResponseEntity.noContent().build();
 
         return ResponseEntity.ok(new UserDto(user));
     }
 
     @Override
-    public User findUser(String identifier) {
+    public User findUser(String identifiable) {
         Optional<User> user = Optional.empty();
 
         try {
-            long id = Long.parseUnsignedLong(identifier);
+            long id = Long.parseUnsignedLong(identifiable);
             user = this.userRepository.findById(id);
         } catch (NumberFormatException ignored) {
         }
 
         // should throw not found exception
         return user.orElse(
-                this.userRepository.findByUsername(identifier).orElse(
-                        this.userRepository.findByIdentityNumber(identifier).orElse(null)
+                this.userRepository.findByUsername(identifiable).orElse(
+                        this.userRepository.findByIdentityNumber(identifiable).orElse(null)
                 )
         );
     }
 
     @Override
-    public User findUser(String identifier, Role role) {
+    public User findUser(String identifiable, Role role) {
         Optional<User> user = Optional.empty();
 
         try {
-            long id = Long.parseUnsignedLong(identifier);
+            long id = Long.parseUnsignedLong(identifiable);
             user = this.userRepository.findByIdAndRole(id, role);
         } catch (NumberFormatException ignored) {
         }
 
         // should throw not found exception
         return user.orElse(
-                this.userRepository.findByUsernameAndRole(identifier, role).orElse(
-                        this.userRepository.findByIdentityNumberAndRole(identifier, role).orElse(null)
+                this.userRepository.findByUsernameAndRole(identifiable, role).orElse(
+                        this.userRepository.findByIdentityNumberAndRole(identifiable, role).orElse(null)
                 )
         );
     }

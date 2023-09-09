@@ -2,7 +2,6 @@ package org.nmng.library.manager.controller;
 
 import jakarta.validation.Valid;
 import org.nmng.library.manager.dto.request.CreateUserDto;
-import org.nmng.library.manager.service.LibrarianService;
 import org.nmng.library.manager.service.PatronService;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,9 +19,9 @@ public class PatronController {
         return this.patronService.getAllUsers();
     }
 
-    @GetMapping({"/{identifier}", "/{identifier}/"})
-    public Object getById(@PathVariable String identifier) {
-        return this.patronService.getSpecifiedUser(identifier);
+    @GetMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object getById(@PathVariable String identifiable) {
+        return this.patronService.getSpecifiedUser(identifiable);
     }
 
     @PostMapping
@@ -30,8 +29,8 @@ public class PatronController {
         return this.patronService.createUser(dto);
     }
 
-    @DeleteMapping({"/{identifier}", "/{identifier}/"})
-    public Object deleteUser(@PathVariable String identifier) {
-        return this.patronService.deleteUser(identifier);
+    @DeleteMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object deleteUser(@PathVariable String identifiable) {
+        return this.patronService.deleteUser(identifiable);
     }
 }

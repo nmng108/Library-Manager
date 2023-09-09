@@ -19,9 +19,9 @@ public class LibrarianController {
         return this.librarianService.getAllUsers();
     }
 
-    @GetMapping({"/{identifier}", "/{identifier}/"})
-    public Object getById(@PathVariable String identifier) {
-        return this.librarianService.getSpecifiedUser(identifier);
+    @GetMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object getById(@PathVariable String identifiable) {
+        return this.librarianService.getSpecifiedUser(identifiable);
     }
 
     @PostMapping
@@ -29,8 +29,8 @@ public class LibrarianController {
         return this.librarianService.createUser(dto);
     }
 
-    @DeleteMapping({"/{identifier}", "/{identifier}/"})
-    public Object deleteUser(@PathVariable String identifier) {
-        return this.librarianService.deleteUser(identifier);
+    @DeleteMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object deleteUser(@PathVariable String identifiable) {
+        return this.librarianService.deleteUser(identifiable);
     }
 }

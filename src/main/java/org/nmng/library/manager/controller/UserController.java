@@ -19,9 +19,9 @@ public class UserController {
         return this.userService.getAllUsers();
     }
 
-    @GetMapping({"/{identifier}", "/{identifier}/"})
-    public Object getById(@PathVariable String identifier) {
-        return this.userService.getSpecifiedUser(identifier);
+    @GetMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object getById(@PathVariable String identifiable) {
+        return this.userService.getSpecifiedUser(identifiable);
     }
 
     @PostMapping
@@ -29,8 +29,8 @@ public class UserController {
         return this.userService.createUser(dto);
     }
 
-    @DeleteMapping({"/{identifier}", "/{identifier}/"})
-    public Object deleteUser(@PathVariable String identifier) {
-        return this.userService.deleteUser(identifier);
+    @DeleteMapping({"/{identifiable}", "/{identifiable}/"})
+    public Object deleteUser(@PathVariable String identifiable) {
+        return this.userService.deleteUser(identifiable);
     }
 }
