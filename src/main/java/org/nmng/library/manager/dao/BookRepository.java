@@ -6,8 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
-
 @Repository
 public interface BookRepository extends JpaRepository<Book, Integer> {
     @Query("SELECT EXISTS (SELECT b FROM Book b WHERE b.name = :name " +
@@ -15,6 +13,9 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
             "AND b.authors = :authors)"
     )
     boolean hasExisted(String name, Integer bookNumber, String authors);
+
     @Query("SELECT EXISTS (SELECT b FROM Book b WHERE b.category = :category)")
     boolean existsByCategory(Category category);
+
+//    Book findBy
 }

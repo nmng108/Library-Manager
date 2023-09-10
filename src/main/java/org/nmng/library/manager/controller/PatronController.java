@@ -25,7 +25,7 @@ public class PatronController {
     }
 
     @PostMapping
-    public Object createUser(@RequestBody @Valid CreateUserDto dto) {
+    public Object createUser(@RequestBody CreateUserDto dto) {
         return this.patronService.createUser(dto);
     }
 

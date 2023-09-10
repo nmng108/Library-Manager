@@ -16,4 +16,5 @@ public interface BookService {
     ResponseEntity<?> create(CreateBookDto dto);
 
     ResponseEntity<?> delete(String identifiable);
+    Book findBook(String identifiable);
 }

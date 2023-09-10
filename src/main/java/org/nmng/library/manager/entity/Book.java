@@ -1,9 +1,11 @@
 package org.nmng.library.manager.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 @Table(name = "books", schema = "library-manager")
@@ -35,8 +37,21 @@ public class Book {
     @ManyToOne
     private Category category;
 
+//    @OneToMany(mappedBy = "book")
+//    @JsonBackReference
+//    private List<RequestDetail> requestDetails;
+
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createTime;
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updateTime;
+
+    public void subtractQuantity(int number) {
+        if (number > this.quantity) throw new RuntimeException("cannot subtract");
+        this.quantity -= number;
+    }
+
+    public void addQuantity(int number) {
+        this.quantity += number;
+    }
 }

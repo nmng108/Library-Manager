@@ -49,7 +49,8 @@ CREATE TABLE IF NOT EXISTS `library-manager`.`categories` (
   `name` VARCHAR(20) NOT NULL,
   `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`))
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
 ENGINE = InnoDB;
 
 
@@ -102,13 +103,12 @@ DROP TABLE IF EXISTS `library-manager`.`books` ;
 CREATE TABLE IF NOT EXISTS `library-manager`.`books` (
   `id` INT UNSIGNED NOT NULL AUTO_INCREMENT,
   `name` VARCHAR(45) NOT NULL,
-  `book_number` TINYINT(3) UNSIGNED NULL,
-  `authors` VARCHAR(100) NOT NULL,
-  `edition` TINYINT(3) UNSIGNED NOT NULL DEFAULT 1,
-  `publisher` VARCHAR(60) NOT NULL,
+  `book_number` TINYINT(2) UNSIGNED NULL,
+  `authors` VARCHAR(150) NOT NULL,
+  `edition` SMALLINT(3) UNSIGNED NOT NULL DEFAULT 1,
+  `publisher` VARCHAR(80) NOT NULL,
   `category_id` SMALLINT(3) UNSIGNED NOT NULL,
   `quantity` MEDIUMINT(6) UNSIGNED NOT NULL,
-  `borrow_fee` DOUBLE UNSIGNED NOT NULL,
   `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
@@ -117,10 +117,113 @@ CREATE TABLE IF NOT EXISTS `library-manager`.`books` (
     FOREIGN KEY (`category_id`)
     REFERENCES `library-manager`.`categories` (`id`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `library-manager`.`policies`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `library-manager`.`policies` ;
+
+CREATE TABLE IF NOT EXISTS `library-manager`.`policies` (
+  `id` TINYINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NOT NULL,
+  `value` VARCHAR(45) NOT NULL,
+  `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `library-manager`.`request_status`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `library-manager`.`request_status` ;
+
+CREATE TABLE IF NOT EXISTS `library-manager`.`request_status` (
+  `id` TINYINT(1) UNSIGNED NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(10) NOT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `library-manager`.`requests`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `library-manager`.`requests` ;
+
+CREATE TABLE IF NOT EXISTS `library-manager`.`requests` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `user_id` BIGINT UNSIGNED NOT NULL,
+  `status_id` TINYINT(1) UNSIGNED NOT NULL,
+  `fine` DOUBLE UNSIGNED NOT NULL DEFAULT 0,
+  `due_date` DATETIME NOT NULL DEFAULT (CURRENT_TIMESTAMP + INTERVAL 5 MINUTE),
+  `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `fk_requests_users1_idx` (`user_id` ASC) VISIBLE,
+  INDEX `fk_requests_request_status1_idx` (`status_id` ASC) VISIBLE,
+  CONSTRAINT `fk_requests_users1`
+    FOREIGN KEY (`user_id`)
+    REFERENCES `library-manager`.`users` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_requests_request_status1`
+    FOREIGN KEY (`status_id`)
+    REFERENCES `library-manager`.`request_status` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `library-manager`.`policies`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `library-manager`.`policies` ;
+
+CREATE TABLE IF NOT EXISTS `library-manager`.`policies` (
+  `id` TINYINT NOT NULL AUTO_INCREMENT,
+  `name` VARCHAR(45) NOT NULL,
+  `value` VARCHAR(45) NOT NULL,
+  `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE INDEX `name_UNIQUE` (`name` ASC) VISIBLE)
+ENGINE = InnoDB;
+
+
+-- -----------------------------------------------------
+-- Table `library-manager`.`request_details`
+-- -----------------------------------------------------
+DROP TABLE IF EXISTS `library-manager`.`request_details` ;
+
+CREATE TABLE IF NOT EXISTS `library-manager`.`request_details` (
+  `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+  `request_id` BIGINT UNSIGNED NOT NULL,
+  `book_id` INT UNSIGNED NOT NULL,
+  `quantity` MEDIUMINT UNSIGNED NOT NULL DEFAULT 1,
+  `create_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `update_time` TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  INDEX `fk_requests_details_requests1_idx` (`request_id` ASC) VISIBLE,
+  INDEX `fk_requests_details_books1_idx` (`book_id` ASC) VISIBLE,
+  CONSTRAINT `fk_requests_details_requests1`
+    FOREIGN KEY (`request_id`)
+    REFERENCES `library-manager`.`requests` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE,
+  CONSTRAINT `fk_requests_details_books1`
+    FOREIGN KEY (`book_id`)
+    REFERENCES `library-manager`.`books` (`id`)
+    ON DELETE NO ACTION
+    ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;
 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS;
+

@@ -2,6 +2,7 @@ package org.nmng.library.manager.service;
 
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
+import org.nmng.library.manager.entity.Role;
 import org.springframework.http.ResponseEntity;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -9,7 +10,7 @@ import java.util.List;
 
 @Transactional
 public interface PatronService {
-    static final String ROLE_NAME = "PATRON";
+    static final String ROLE_NAME = Role.PATRON;
 
     ResponseEntity<?> getAllUsers();
 
