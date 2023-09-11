@@ -1,0 +1,183 @@
+package org.nmng.library.manager.security;
+
+import org.nmng.library.manager.entity.Role;
+import org.nmng.library.manager.filter.JwtVerificationFilter;
+import org.nmng.library.manager.service.Impl.UserServiceImpl;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.config.Customizer;
+import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.core.userdetails.User;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.password.NoOpPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.security.crypto.password.StandardPasswordEncoder;
+import org.springframework.security.provisioning.InMemoryUserDetailsManager;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+
+@Configuration
+@EnableWebSecurity
+@EnableGlobalMethodSecurity(
+        securedEnabled = true,
+        jsr250Enabled = true
+//        prePostEnabled = true
+)
+public class WebSecurityConfiguration {
+    private final AuthenticationEntryPoint authenticationEntryPoint;
+    private final UserDetailsService userDetailsService;
+    public WebSecurityConfiguration(JwtAuthenticationEntryPoint authenticationEntryPoint, UserServiceImpl userService) {
+        this.authenticationEntryPoint = authenticationEntryPoint;
+        this.userDetailsService = userService;
+    }
+
+//    @Bean
+//    UserDetailsService userDetailsService() {
+//        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
+//        manager.createUser(User.builder().username("lib").password("1").roles(Role.LIBRARIAN).build());
+//        manager.createUser(User.builder().username("patron").password("2").roles("PATRON").build());
+//
+//        return manager;
+//    }
+
+    @Bean
+    public PasswordEncoder passwordEncoder() {
+        return NoOpPasswordEncoder.getInstance();
+    }
+
+    @Bean
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
+        return authConfig.getAuthenticationManager();
+    }
+
+    @Bean
+    public SecurityFilterChain authenticationEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher(AntPathRequestMatcher.antMatcher("/api/auth/**"))
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/login")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/password")).permitAll()
+                        .anyRequest().permitAll()
+                )
+                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain bookManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher("/api/books/**")
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET).permitAll()
+                        .requestMatchers(HttpMethod.POST).hasAnyAuthority(Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain categoryManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher("/api/categories/**")
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET).permitAll()
+                        .requestMatchers(HttpMethod.POST).hasRole(Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
+                        .anyRequest().authenticated()
+                )
+                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain requestManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher(AntPathRequestMatcher.antMatcher("/api/requests/**"))
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().hasAnyAuthority(Role.LIBRARIAN)
+                )
+                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain patronManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher("/api/patrons/**")
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN, Role.LIBRARIAN)
+                )
+                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain librarianManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher("/api/librarians/**")
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
+                )
+                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+
+    @Bean
+    public SecurityFilterChain userManagementEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
+        httpSecurity
+                .securityMatcher("/api/users/**")
+                .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(authorize -> authorize
+                        .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
+                )
+                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+//                .userDetailsService(this.userDetailsService)
+        ;
+
+        return httpSecurity.build();
+    }
+}

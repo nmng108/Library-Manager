@@ -191,10 +191,10 @@ public class RequestServiceImpl implements RequestService {
             long numberOfIntervals = duration.getSeconds() / Policy.FINE_COUNTING_INTERVAL.getSeconds();
 
             request.setFine(numberOfIntervals * Policy.FINE_PER_INTERVAL);
-            System.out.printf("Expired request %s: update time is %s, total fine of request is %s%n",
-                    request.getId(),
-                    request.getUpdateTime(),
-                    request.getFine());
+//            System.out.printf("Expired request %s: update time is %s, total fine of request is %s%n",
+//                    request.getId(),
+//                    request.getUpdateTime(),
+//                    request.getFine());
         });
 
         borrowingRequests.forEach(request -> {

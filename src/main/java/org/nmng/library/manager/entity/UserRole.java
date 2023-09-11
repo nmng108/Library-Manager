@@ -2,14 +2,17 @@ package org.nmng.library.manager.entity;
 
 import jakarta.persistence.*;
 import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "user_roles", schema = "library-manager")
 @NoArgsConstructor
-@Data
+@Getter
+@Setter
 public class UserRole {
     @Column(nullable = false)
     @Id

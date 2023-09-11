@@ -10,14 +10,18 @@ import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.entity.UserRole;
 import org.nmng.library.manager.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
@@ -180,5 +184,16 @@ public class UserServiceImpl implements UserService {
     @Override
     public Role queryRole(String roleName) {
         return this.queryRoles(List.of(roleName)).get(0);
+    }
+
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        User user = this.userRepository.findByUsername(username).orElse(null);
+
+        if (user == null) {
+            throw new ResponseStatusException(404, "User not found", null);
+        }
+
+        return user;
     }
 }

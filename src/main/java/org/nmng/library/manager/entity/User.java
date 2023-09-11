@@ -2,12 +2,13 @@ package org.nmng.library.manager.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import lombok.*;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 
 @Entity
@@ -16,7 +17,7 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Data
-public class User {
+public class User implements UserDetails {
     @Column(nullable = false)
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -46,10 +47,36 @@ public class User {
 
     @OneToMany(mappedBy = "user")
     @JsonBackReference
+    @ToString.Exclude
     private List<UserRole> roles;
 
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createTime;
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updateTime;
+
+    @Override
+    public Collection<? extends GrantedAuthority> getAuthorities() { // ?? how to get role?
+        return this.roles.stream().map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName())).toList();
+    }
+
+    @Override
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
+    @Override
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
+    @Override
+    public boolean isEnabled() {
+        return true;
+    }
 }
