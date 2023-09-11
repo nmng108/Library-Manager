@@ -34,8 +34,8 @@ public class AuthenticationController {
         return ResponseEntity.ok(response);
     }
 
-//    @GetMapping({"/logout", "/logout/"})
-//    public ResponseEntity<?> logout() {
-//
+//    @PatchMapping({"/password", "/password/"})
+//    public ResponseEntity<?> changePassword() {
+//        return null;
 //    }
 }

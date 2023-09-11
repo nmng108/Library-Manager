@@ -10,6 +10,8 @@ import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.entity.UserRole;
 import org.nmng.library.manager.service.UserService;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -193,6 +195,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         if (user == null) {
             throw new ResponseStatusException(404, "User not found", null);
         }
+
+        List<Role> roles = this.userRoleRepository.findByUser(user).stream().map(UserRole::getRole).toList();
+        List<? extends GrantedAuthority> authorities = roles.stream()
+                .map(role -> new SimpleGrantedAuthority(role.getName()))
+                .toList();
+
+        user.setAuthorities(authorities);
 
         return user;
     }

@@ -5,7 +5,6 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
-import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -14,14 +13,16 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
+import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 
+@Component
 @Slf4j
 public class JwtVerificationFilter extends OncePerRequestFilter{
     @Autowired
-    private JwtUtils jwtUtil;
+    private JwtUtils jwtUtils;
 
     @Autowired
     private UserDetailsService userDetailsService;
@@ -38,7 +39,7 @@ public class JwtVerificationFilter extends OncePerRequestFilter{
 
         String token = getAccessToken(request);
 
-        if (!jwtUtil.validateAccessToken(token)) {
+        if (!jwtUtils.validateAccessToken(token)) {
             filterChain.doFilter(request, response);
             return;
         }
@@ -50,12 +51,12 @@ public class JwtVerificationFilter extends OncePerRequestFilter{
     private boolean hasAuthorizationBearer(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
 
-        return header != null && header.matches("Bearer [0-9a-zA-Z_-]+");
+        return header != null && header.matches("Bearer [.0-9a-zA-Z_-]+");
     }
 
     private String getAccessToken(HttpServletRequest request) {
         String header = request.getHeader("Authorization");
-        return header.split(" ")[1].trim();
+        return header.split("Bearer ")[1].trim();
     }
 
     private void setAuthenticationContext(String token, HttpServletRequest request) {
@@ -71,12 +72,12 @@ public class JwtVerificationFilter extends OncePerRequestFilter{
     }
 
     private UserDetails getUserDetails(String token) {
-        String username = jwtUtil.getSubject(token);
+        String username = jwtUtils.getSubject(token);
 
         UserDetails userDetails = this.userDetailsService.loadUserByUsername(username);
 
         if (userDetails == null) {
-            log.info("user not found");
+//            log.info("user not found");
             throw new AccessDeniedException("user not found");
         }
 

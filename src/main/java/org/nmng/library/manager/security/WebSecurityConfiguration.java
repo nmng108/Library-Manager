@@ -3,6 +3,7 @@ package org.nmng.library.manager.security;
 import org.nmng.library.manager.entity.Role;
 import org.nmng.library.manager.filter.JwtVerificationFilter;
 import org.nmng.library.manager.service.Impl.UserServiceImpl;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -27,17 +28,18 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
-@EnableGlobalMethodSecurity(
-        securedEnabled = true,
-        jsr250Enabled = true
-//        prePostEnabled = true
-)
 public class WebSecurityConfiguration {
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final UserDetailsService userDetailsService;
-    public WebSecurityConfiguration(JwtAuthenticationEntryPoint authenticationEntryPoint, UserServiceImpl userService) {
+    private final JwtVerificationFilter jwtVerificationFilter;
+
+    public WebSecurityConfiguration(JwtAuthenticationEntryPoint authenticationEntryPoint,
+                                    UserServiceImpl userService,
+                                    JwtVerificationFilter jwtVerificationFilter
+    ) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.userDetailsService = userService;
+        this.jwtVerificationFilter = jwtVerificationFilter;
     }
 
 //    @Bean
@@ -60,17 +62,25 @@ public class WebSecurityConfiguration {
     }
 
     @Bean
+    public FilterRegistrationBean<JwtVerificationFilter> registerJwtFilter(JwtVerificationFilter filter) {
+        FilterRegistrationBean<JwtVerificationFilter> registrationBean = new FilterRegistrationBean<>(filter);
+        registrationBean.setEnabled(false);
+
+        return registrationBean;
+    }
+
+    @Bean
     public SecurityFilterChain authenticationEndpointFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
                 .securityMatcher(AntPathRequestMatcher.antMatcher("/api/auth/**"))
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(AntPathRequestMatcher.antMatcher("/login")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/login")).anonymous()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/password")).permitAll()
                         .anyRequest().permitAll()
                 )
-                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class)
                 .userDetailsService(this.userDetailsService)
         ;
 
@@ -90,7 +100,7 @@ public class WebSecurityConfiguration {
                         .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 
@@ -105,12 +115,12 @@ public class WebSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET).permitAll()
-                        .requestMatchers(HttpMethod.POST).hasRole(Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.POST).hasAuthority(Role.LIBRARIAN)
                         .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
                         .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
                         .anyRequest().authenticated()
                 )
-                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 
@@ -124,9 +134,9 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().hasAnyAuthority(Role.LIBRARIAN)
+                        .anyRequest().hasAuthority(Role.LIBRARIAN)
                 )
-                .addFilterBefore(new JwtVerificationFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 
@@ -142,7 +152,7 @@ public class WebSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN, Role.LIBRARIAN)
                 )
-                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 
@@ -158,7 +168,7 @@ public class WebSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
                 )
-                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 
@@ -174,7 +184,7 @@ public class WebSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
                 )
-                .addFilterBefore(new JwtVerificationFilter(), AuthorizationFilter.class)
+                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
         ;
 

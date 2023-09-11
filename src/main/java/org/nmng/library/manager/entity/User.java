@@ -55,8 +55,13 @@ public class User implements UserDetails {
     @Column(nullable = false, insertable = false, updatable = false, columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP")
     private LocalDateTime updateTime;
 
+    @Transient
+    private List<? extends GrantedAuthority> authorities;
+
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // ?? how to get role?
+        if (authorities != null) return this.authorities;
+        // the line below doesn't work in Filter
         return this.roles.stream().map(userRole -> new SimpleGrantedAuthority(userRole.getRole().getName())).toList();
     }
 
