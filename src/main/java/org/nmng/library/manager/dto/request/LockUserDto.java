@@ -8,18 +8,23 @@ import lombok.Setter;
 
 import java.time.Duration;
 
-@Getter
 @Setter
 public class LockUserDto {
+    @Getter
     @NotBlank
     private String identifiable;
     @NotNull
     private Boolean locked;
     @NotBlank
-    @Pattern(regexp = "(FOREVER)|(([0-9]{1,3}DT)?([0-9]{1,2}H)?([0-9]{1,2}M)?([0-9]{1,2}S)?)")
+    @Pattern(regexp = "(FOREVER)|(([0-9]{1,3}D)?(T([0-9]{1,2}H)?([0-9]{1,2}M)?([0-9]{1,2}S)?))")
     private String lastDuration;
 
+    public boolean isLocked() {
+        return this.locked;
+    }
+
     public Duration getLastDuration() {
+//        System.out.println("LastDuration: %s".formatted(this.lastDuration));
         if (this.lastDuration.equalsIgnoreCase("FOREVER")) return Duration.ZERO;
         return Duration.parse("P" + lastDuration);
     }

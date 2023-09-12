@@ -8,6 +8,7 @@ import org.nmng.library.manager.entity.Role;
 import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.exception.HttpException;
 import org.nmng.library.manager.service.LibrarianService;
+import org.nmng.library.manager.service.PatronService;
 import org.nmng.library.manager.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.AccessDeniedException;
@@ -64,6 +65,7 @@ public class LibrarianServiceImpl implements LibrarianService {
 
     @Override
     public ResponseEntity<?> lockUser(LockUserDto dto) {
-        return LibrarianService.super.lockUser(dto);
+        LibrarianService.super.lockUser(dto);
+        return this.userService.lockUser(dto, this.ROLE);
     }
 }

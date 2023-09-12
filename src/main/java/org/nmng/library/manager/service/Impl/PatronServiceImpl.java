@@ -29,7 +29,7 @@ public class PatronServiceImpl implements PatronService {
     @Override
     public ResponseEntity<?> getSpecifiedUser(String identifiable) {
         User user = (User) SecurityContextHolder.getContext().getAuthentication().getPrincipal();
-        System.out.println(user);
+
         if (user == null) throw new HttpException(403, "not permitted");
 
         // only allow patron to view info of the logged in account and prevent patron from viewing info of others
@@ -60,6 +60,7 @@ public class PatronServiceImpl implements PatronService {
 
     @Override
     public ResponseEntity<?> lockUser(LockUserDto dto) {
-        return PatronService.super.lockUser(dto);
+        PatronService.super.lockUser(dto);
+        return this.userService.lockUser(dto, this.ROLE);
     }
 }

@@ -7,13 +7,14 @@ import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.exception.InternalServerException;
 import org.nmng.library.manager.exception.InvalidRequestException;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Objects;
 
 @Transactional
-public interface UserService {
+public interface UserService extends UserDetailsService {
     ResponseEntity<?> getAllUsers();
 
     ResponseEntity<?> getAllUsers(String role);

@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service.Impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.nmng.library.manager.dao.RequestRepository;
 import org.nmng.library.manager.dao.RoleRepository;
 import org.nmng.library.manager.dao.UserRepository;
@@ -7,8 +8,10 @@ import org.nmng.library.manager.dao.UserRoleRepository;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
+import org.nmng.library.manager.dto.response.common.SuccessResponse;
 import org.nmng.library.manager.entity.*;
 import org.nmng.library.manager.exception.InvalidRequestException;
+import org.nmng.library.manager.exception.ResourceNotFoundException;
 import org.nmng.library.manager.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -20,12 +23,14 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Service
-public class UserServiceImpl implements UserService, UserDetailsService {
+@Slf4j
+public class UserServiceImpl implements UserService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
@@ -155,10 +160,36 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public ResponseEntity<?> lockUser(LockUserDto dto, Role role) {
-        UserService.super.lockUser(dto, role);
+    public ResponseEntity<?> lockUser(LockUserDto dto, Role serviceRole) {
+        UserService.super.lockUser(dto, serviceRole);
+        User user = this.findUser(dto.getIdentifiable());
 
-        return null;
+        if (user == null) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        List<Role> userRoles = this.roleRepository.findByUser(user);
+
+        if (userRoles.stream().noneMatch(role -> role.getName().equalsIgnoreCase(serviceRole.getName()))) {
+            throw new ResourceNotFoundException("User not found");
+        }
+
+        if (dto.isLocked()) {
+            LocalDateTime expirationDate = LocalDateTime.now().plus(dto.getLastDuration());
+
+            user.setLockExpirationDate(expirationDate);
+            if (user.isAccountNonLocked()) user.setLocked(true);
+
+            return ResponseEntity.ok(new SuccessResponse("user %s is locked until %s".formatted(user.getUsername(), expirationDate)));
+
+        } else if (user.isLocked()) {
+            user.setLocked(false);
+            user.setLockExpirationDate(null);
+
+            return ResponseEntity.ok(new SuccessResponse("user %s is unlocked".formatted(user.getUsername())));
+        }
+
+        return ResponseEntity.noContent().build();
     }
 
     // TODO: implement this; update all user's passwords with new passwordEncoder
@@ -238,12 +269,13 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = this.userRepository.findByUsername(username).orElse(null);
+        log.info("loadUserByUsername is called");
 
         if (user == null) {
             throw new ResponseStatusException(404, "User not found", null);
         }
 
-        List<Role> roles = this.userRoleRepository.findByUser(user).stream().map(UserRole::getRole).toList();
+        List<Role> roles = this.roleRepository.findByUser(user);
         List<? extends GrantedAuthority> authorities = roles.stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
                 .toList();

@@ -5,6 +5,8 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
+import org.nmng.library.manager.dao.UserRepository;
+import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.security.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.access.AccessDeniedException;
@@ -17,51 +19,64 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 
 @Component
 @Slf4j
-public class JwtVerificationFilter extends OncePerRequestFilter{
+public class JwtVerificationFilter extends OncePerRequestFilter {
     @Autowired
     private JwtUtils jwtUtils;
 
     @Autowired
     private UserDetailsService userDetailsService;
 
+    @Autowired
+    private UserRepository userRepository;
+
     @Override
     protected void doFilterInternal(HttpServletRequest request,
                                     HttpServletResponse response, FilterChain filterChain)
             throws ServletException, IOException {
+        String header = request.getHeader("Authorization");
 
-        if (!hasAuthorizationBearer(request)) {
+        if (!hasValidAuthorizationBearer(header)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        String token = getAccessToken(request);
+        String token = getAccessToken(header);
 
         if (!jwtUtils.validateAccessToken(token)) {
             filterChain.doFilter(request, response);
             return;
         }
 
-        setAuthenticationContext(token, request);
+        UserDetails userDetails = getUserDetails(token);
+
+        // check if user is locked. If not, then Authentication will be saved to the security context
+        if (userDetails.isAccountNonLocked()) setAuthenticationContext(userDetails, request);
+        else if (userDetails instanceof User && LocalDateTime.now().isAfter(((User) userDetails).getLockExpirationDate())) { // should always be true
+            ((User) userDetails).setLocked(false);
+            this.userRepository.save((User) userDetails);
+            log.info("Unlocked user. Continue using service.");
+
+            setAuthenticationContext(userDetails, request);
+        } else {
+            log.info("User is still being locked. Continue using service as an anonymous.");
+        }
+
         filterChain.doFilter(request, response);
     }
 
-    private boolean hasAuthorizationBearer(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
-
+    private boolean hasValidAuthorizationBearer(String header) {
         return header != null && header.matches("Bearer [.0-9a-zA-Z_-]+");
     }
 
-    private String getAccessToken(HttpServletRequest request) {
-        String header = request.getHeader("Authorization");
+    private String getAccessToken(String header) {
         return header.split("Bearer ")[1].trim();
     }
 
-    private void setAuthenticationContext(String token, HttpServletRequest request) {
-        UserDetails userDetails = getUserDetails(token);
-
+    private void setAuthenticationContext(UserDetails userDetails, HttpServletRequest request) {
         UsernamePasswordAuthenticationToken
                 authentication = new UsernamePasswordAuthenticationToken(userDetails, null, userDetails.getAuthorities());
 
@@ -82,4 +97,7 @@ public class JwtVerificationFilter extends OncePerRequestFilter{
         }
 
         return userDetails;
-    }}
+    }
+
+//    private void changeLockStatus()
+}

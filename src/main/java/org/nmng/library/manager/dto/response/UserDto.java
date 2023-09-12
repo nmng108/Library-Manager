@@ -11,7 +11,7 @@ import java.util.stream.Collectors;
 @Data
 public class UserDto {
     private String username;
-    private String password;
+//    private String password;
     private List<String> roles;
     private String fullName;
     private String identity;
@@ -20,12 +20,14 @@ public class UserDto {
     private String address;
     private LocalDateTime createTime;
     private LocalDateTime updateTime;
+    private boolean locked;
+    private LocalDateTime lockExpiration;
 
     public UserDto(User user) {
         Objects.requireNonNull(user);
 
         this.username = user.getUsername();
-        this.password = user.getPassword();
+//        this.password = user.getPassword();
         this.roles = user.getRoles().stream()
                 .map(userRole -> userRole.getRole().getName())
                 .collect(Collectors.toList());
@@ -36,5 +38,7 @@ public class UserDto {
         this.address = user.getAddress();
         this.createTime = user.getCreateTime();
         this.updateTime = user.getUpdateTime();
+        this.locked = user.isLocked();
+        this.lockExpiration = user.getLockExpirationDate();
     }
 }

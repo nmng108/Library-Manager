@@ -56,7 +56,6 @@ public class WebSecurityConfiguration {
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-//        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
@@ -138,6 +137,7 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET).hasAnyAuthority(Role.LIBRARIAN, Role.ADMIN, Role.ROOT_ADMIN)
                         .anyRequest().hasAuthority(Role.LIBRARIAN)
                 )
                 .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
