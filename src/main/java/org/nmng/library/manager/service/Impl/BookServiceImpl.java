@@ -1,10 +1,16 @@
 package org.nmng.library.manager.service.Impl;
 
+import org.nmng.library.manager.dao.BookViewRepository;
 import org.nmng.library.manager.dao.CategoryRepository;
 import org.nmng.library.manager.dao.BookRepository;
+import org.nmng.library.manager.dto.request.BookSearchDto;
 import org.nmng.library.manager.dto.request.CreateBookDto;
+import org.nmng.library.manager.dto.response.CommonResponse;
+import org.nmng.library.manager.dto.response.PaginationSuccessResponse;
 import org.nmng.library.manager.entity.Book;
+import org.nmng.library.manager.entity.BookView;
 import org.nmng.library.manager.entity.Category;
+import org.nmng.library.manager.model.BookSearchModel;
 import org.nmng.library.manager.service.BookService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
@@ -14,16 +20,29 @@ import java.util.List;
 @Service
 public class BookServiceImpl implements BookService {
     private final BookRepository bookRepository;
+    private final BookViewRepository bookViewRepository;
     private final CategoryRepository categoryRepository;
 
-    public BookServiceImpl(BookRepository bookRepository, CategoryRepository categoryRepository) {
+    public BookServiceImpl(BookRepository bookRepository, BookViewRepository bookViewRepository, CategoryRepository categoryRepository) {
         this.bookRepository = bookRepository;
+        this.bookViewRepository = bookViewRepository;
         this.categoryRepository = categoryRepository;
     }
 
     @Override
-    public ResponseEntity<?> getAll() {
-        return ResponseEntity.ok(this.bookRepository.findAll());
+    public ResponseEntity<?> getAll(BookSearchDto dto) {
+        BookSearchModel bookSearch = new BookSearchModel(dto);
+        Long counter = dto.getCount() != null
+                ? (dto.getCount().equals(true) ? this.bookViewRepository.countByCriteria(bookSearch) : null)
+                : null;
+        List<BookView> result = this.bookViewRepository.findByCriteria(bookSearch);
+
+        return ResponseEntity.ok(dto.getPage() != null
+                ? new PaginationSuccessResponse<>(true, result, counter, (long) dto.getSize())
+                : new CommonResponse(true, result)
+        );
+
+//        return ResponseEntity.ok(this.bookRepository.findAll());
     }
 
     @Override

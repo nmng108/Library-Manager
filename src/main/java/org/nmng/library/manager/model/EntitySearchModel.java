@@ -26,28 +26,27 @@ public abstract class EntitySearchModel<T extends SearchDto> {
         this.pagination = this.constructsPagination(searchDTO.getPage(), searchDTO.getSize());
     }
 
-    protected static Condition formatCondition(String propertyName, String condition) {
-        // may put this into an "event" function that will be called after receiving and parsing request to SearchDto
-        if (propertyName == null) {
+    protected static Condition formatCondition(String entityAttributeName, String condition) {
+        if (entityAttributeName == null) {
             throw new InternalServerException("Property name is not found");
         }
 
         if (condition == null) {
-            throw new InvalidRequestException("Value of " + propertyName + " cannot be null or blank");
+            throw new InvalidRequestException("Value of " + entityAttributeName + " cannot be null or blank");
         }
 
         // may accept & check the 'list' format here
 
         // apply a common regex to all property's conditions
         if (!condition.matches("^[a-zA-Z0-9-._]+( [a-zA-Z0-9-._]+)*$")) {
-            throw new InvalidRequestException("Invalid value of " + propertyName);
+            throw new InvalidRequestException("Invalid value of " + entityAttributeName);
         }
 
         // at least 1 "word"
         String[] splitCondition = condition.split(" ");
 
         if (splitCondition.length == 1) {
-            return new Condition(propertyName, "=", condition);
+            return new Condition(entityAttributeName, "=", condition);
         }
 
         // at least 2 "words"
@@ -55,11 +54,11 @@ public abstract class EntitySearchModel<T extends SearchDto> {
             if (condition.startsWith(operator)) {
                 String value = condition.replaceFirst(operator.concat(" "), "");
 
-                return new Condition(propertyName, operator, value);
+                return new Condition(entityAttributeName, operator, value);
             }
         }
 
-        throw new InvalidRequestException("Invalid operator of " + propertyName);
+        throw new InvalidRequestException("Invalid operator of " + entityAttributeName);
     }
 
     // relate to specific searchDto; need to be overridden
@@ -81,7 +80,7 @@ public abstract class EntitySearchModel<T extends SearchDto> {
             }
 
             return switch (condition.getOperator()) {
-                // allow some other data types and serve as "equal"
+                // allow some other data types and serve similar way to "equal"
                 case "like" -> builder.like(root.get(attributeName), condition.getExpressionValue());
                 case "equal", "eq", "=" -> builder.equal(root.get(attributeName), condition.getExpressionValue());
                 case "le", "<=" -> builder.lessThanOrEqualTo(root.get(attributeName), condition.getExpressionValue());
@@ -122,7 +121,7 @@ public abstract class EntitySearchModel<T extends SearchDto> {
             throw new InvalidRequestException("\"sortBy\" must be specified along with \"order\"");
         }
 
-        // check if the field exists
+        // check if the field passed into "sortBy" exists
         if (sortBy != null && Arrays.stream(this.getSearchDtoClass().getDeclaredFields())
                 .noneMatch(field -> field.getName().equals(sortBy))) {
             throw new InvalidRequestException("\"" + sortBy + "\"" + " is not a valid field");

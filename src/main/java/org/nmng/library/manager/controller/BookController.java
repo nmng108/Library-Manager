@@ -1,6 +1,7 @@
 package org.nmng.library.manager.controller;
 
 import jakarta.validation.Valid;
+import org.nmng.library.manager.dto.request.BookSearchDto;
 import org.nmng.library.manager.dto.request.CreateBookDto;
 import org.nmng.library.manager.service.BookService;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +17,8 @@ public class BookController {
     }
 
     @GetMapping
-    public Object getAll() {
-        return this.bookService.getAll();
+    public Object getAll(@Valid BookSearchDto dto) {
+        return this.bookService.getAll(dto);
     }
 
     @GetMapping({"/{identifiable}", "/{identifiable}/"})

@@ -158,14 +158,14 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     /**
-     * Validate input roles and convert all of them into the Role objects
+     * Validate input roles and convert all of them into the Role entities
      *
      * @param roleNames List<String>
      * @return List<Role>
      */
     @Override
     public List<Role> queryRoles(List<String> roleNames) {
-        List<Role> allRoles = roleRepository.findAll();
+        List<Role> allRoles = this.roleRepository.findAll();
 
         return roleNames.stream().map(roleName -> {
             Role result = null;

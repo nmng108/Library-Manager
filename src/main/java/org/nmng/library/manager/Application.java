@@ -8,7 +8,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 
 @SpringBootApplication
 @EnableScheduling
-@ConfigurationPropertiesScan("com.example.demo.configuration")
+@ConfigurationPropertiesScan("org.nmng.library.manager.configuration")
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class, args);

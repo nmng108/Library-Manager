@@ -16,6 +16,4 @@ public interface BookRepository extends JpaRepository<Book, Integer> {
 
     @Query("SELECT EXISTS (SELECT b FROM Book b WHERE b.category = :category)")
     boolean existsByCategory(Category category);
-
-//    Book findBy
 }

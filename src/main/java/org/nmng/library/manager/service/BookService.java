@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service;
 
+import org.nmng.library.manager.dto.request.BookSearchDto;
 import org.nmng.library.manager.dto.request.CreateBookDto;
 import org.nmng.library.manager.entity.Book;
 import org.springframework.http.ResponseEntity;
@@ -9,7 +10,7 @@ import java.util.List;
 
 @Transactional
 public interface BookService {
-    ResponseEntity<?> getAll();
+    ResponseEntity<?> getAll(BookSearchDto dto);
 
     ResponseEntity<?> getSpecifiedOne(String identifiable);
 
