@@ -1,13 +1,14 @@
 package org.nmng.library.manager.service.Impl;
 
+import org.nmng.library.manager.dao.RequestRepository;
 import org.nmng.library.manager.dao.RoleRepository;
 import org.nmng.library.manager.dao.UserRepository;
 import org.nmng.library.manager.dao.UserRoleRepository;
 import org.nmng.library.manager.dto.request.CreateUserDto;
+import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
-import org.nmng.library.manager.entity.Role;
-import org.nmng.library.manager.entity.User;
-import org.nmng.library.manager.entity.UserRole;
+import org.nmng.library.manager.entity.*;
+import org.nmng.library.manager.exception.InvalidRequestException;
 import org.nmng.library.manager.service.UserService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
@@ -15,6 +16,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -27,11 +29,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     private final UserRepository userRepository;
     private final UserRoleRepository userRoleRepository;
     private final RoleRepository roleRepository;
+    private final RequestRepository requestRepository;
+    private PasswordEncoder passwordEncoder;
 
-    public UserServiceImpl(UserRepository userRepository, UserRoleRepository userRoleRepository, RoleRepository roleRepository) {
+    public UserServiceImpl(UserRepository userRepository, UserRoleRepository userRoleRepository,
+                           RoleRepository roleRepository, RequestRepository requestRepository
+    ) {
         this.userRepository = userRepository;
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
+        this.requestRepository = requestRepository;
+//        this.passwordEncoder = passwordEncoder;
+    }
+
+    public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
+        this.passwordEncoder = passwordEncoder;
     }
 
     @Override
@@ -42,7 +54,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public ResponseEntity<?>getAllUsers(String role) {
+    public ResponseEntity<?> getAllUsers(String role) {
         Role specifiedRole = this.queryRole(role); // should have only 1 element
 
         if (specifiedRole == null) throw new RuntimeException("error while identifying role");
@@ -67,7 +79,7 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     }
 
     @Override
-    public ResponseEntity<?>getSpecifiedUser(String identifiable, Role role) {
+    public ResponseEntity<?> getSpecifiedUser(String identifiable, Role role) {
         User user = this.findUser(identifiable, role);
 
         return user == null ?
@@ -78,22 +90,30 @@ public class UserServiceImpl implements UserService, UserDetailsService {
 
     @Override
     public ResponseEntity<?> createUser(CreateUserDto dto) {
-        User user = this.userRepository.save(dto.toUser());
+        User user = dto.toUser();
+
+        user.setPassword(this.passwordEncoder.encode(dto.getPassword()));
+
+        User savedUser = this.userRepository.save(user);
         List<Role> roles = this.queryRoles(dto.getRoles());
 
         // concurrently save each userRole object and return list of them
         List<UserRole> userRoles = roles.stream()
-                .map(role -> this.userRoleRepository.save(new UserRole(user, role)))
+                .map(role -> this.userRoleRepository.save(new UserRole(savedUser, role)))
                 .toList();
 
-        user.setRoles(userRoles);
+        savedUser.setRoles(userRoles);
 
-        return ResponseEntity.ok(new UserDto(user));
+        return ResponseEntity.ok(new UserDto(savedUser));
     }
 
     @Override
-    public ResponseEntity<?>createUser(CreateUserDto dto, Role role) {
-        User user = this.userRepository.save(dto.toUser());
+    public ResponseEntity<?> createUser(CreateUserDto dto, Role role) {
+        User user = dto.toUser();
+
+        user.setPassword(this.passwordEncoder.encode(dto.getPassword()));
+        user = this.userRepository.save(user);
+
         UserRole userRole = this.userRoleRepository.save(new UserRole(user, role));
 
         user.setRoles(List.of(userRole));
@@ -105,8 +125,21 @@ public class UserServiceImpl implements UserService, UserDetailsService {
     public ResponseEntity<?> deleteUser(String identifiable) {
         User user = this.findUser(identifiable);
 
-        if (user != null) this.userRepository.delete(user);
-        else return ResponseEntity.notFound().build();
+        if (user != null) {
+            List<Request> requests = this.requestRepository.findByPatron(user);
+
+            for (Request request : requests) {
+                if (request.getStatus().getName().equalsIgnoreCase(RequestStatus.BORROWING)
+                        || request.getStatus().getName().equalsIgnoreCase(RequestStatus.EXPIRED)) {
+                    throw new InvalidRequestException("User cannot be deleted. " +
+                            "There's request with id \"%s\" in borrowing status");
+                }
+
+                this.requestRepository.delete(request);
+            }
+
+            this.userRepository.delete(user);
+        } else return ResponseEntity.notFound().build();
 
         return ResponseEntity.ok(new UserDto(user));
     }
@@ -119,6 +152,20 @@ public class UserServiceImpl implements UserService, UserDetailsService {
         else return ResponseEntity.noContent().build();
 
         return ResponseEntity.ok(new UserDto(user));
+    }
+
+    @Override
+    public ResponseEntity<?> lockUser(LockUserDto dto, Role role) {
+        UserService.super.lockUser(dto, role);
+
+        return null;
+    }
+
+    // TODO: implement this; update all user's passwords with new passwordEncoder
+    @Override
+    public ResponseEntity<?> changeEncoder(String encoder) {
+//        List<User> users = this.userRepository.findAll();
+        return null;
     }
 
     @Override

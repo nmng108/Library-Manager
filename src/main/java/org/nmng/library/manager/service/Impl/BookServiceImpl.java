@@ -5,8 +5,8 @@ import org.nmng.library.manager.dao.CategoryRepository;
 import org.nmng.library.manager.dao.BookRepository;
 import org.nmng.library.manager.dto.request.BookSearchDto;
 import org.nmng.library.manager.dto.request.CreateBookDto;
-import org.nmng.library.manager.dto.response.CommonResponse;
 import org.nmng.library.manager.dto.response.PaginationSuccessResponse;
+import org.nmng.library.manager.dto.response.common.SuccessResponse;
 import org.nmng.library.manager.entity.Book;
 import org.nmng.library.manager.entity.BookView;
 import org.nmng.library.manager.entity.Category;
@@ -39,7 +39,7 @@ public class BookServiceImpl implements BookService {
 
         return ResponseEntity.ok(dto.getPage() != null
                 ? new PaginationSuccessResponse<>(true, result, counter, (long) dto.getSize())
-                : new CommonResponse(true, result)
+                : new SuccessResponse(result)
         );
 
 //        return ResponseEntity.ok(this.bookRepository.findAll());

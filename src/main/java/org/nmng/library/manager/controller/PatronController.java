@@ -2,7 +2,9 @@ package org.nmng.library.manager.controller;
 
 import jakarta.validation.Valid;
 import org.nmng.library.manager.dto.request.CreateUserDto;
+import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.service.PatronService;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -32,5 +34,10 @@ public class PatronController {
     @DeleteMapping({"/{identifiable}", "/{identifiable}/"})
     public Object deleteUser(@PathVariable String identifiable) {
         return this.patronService.deleteUser(identifiable);
+    }
+
+    @PatchMapping("/lock")
+    public ResponseEntity<?> lockPatron(@RequestBody @Valid LockUserDto dto) {
+        return this.patronService.lockUser(dto);
     }
 }

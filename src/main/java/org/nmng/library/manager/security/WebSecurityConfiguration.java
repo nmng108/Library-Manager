@@ -16,6 +16,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.crypto.factory.PasswordEncoderFactories;
 import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.crypto.password.StandardPasswordEncoder;
@@ -25,6 +26,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
+import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
@@ -53,7 +55,8 @@ public class WebSecurityConfiguration {
 
     @Bean
     public PasswordEncoder passwordEncoder() {
-        return NoOpPasswordEncoder.getInstance();
+        return PasswordEncoderFactories.createDelegatingPasswordEncoder();
+//        return NoOpPasswordEncoder.getInstance();
     }
 
     @Bean
@@ -77,6 +80,7 @@ public class WebSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/login")).anonymous()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/register")).anonymous()
                         .requestMatchers(AntPathRequestMatcher.antMatcher("/password")).permitAll()
                         .anyRequest().permitAll()
                 )
@@ -150,7 +154,8 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN, Role.LIBRARIAN)
+                        .requestMatchers(HttpMethod.GET, "/api/patrons/*").authenticated()
+                        .anyRequest().hasAnyAuthority(Role.LIBRARIAN, Role.ADMIN, Role.ROOT_ADMIN)
                 )
                 .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
 //                .userDetailsService(this.userDetailsService)
@@ -166,6 +171,8 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
+                        .requestMatchers(HttpMethod.GET, "/api/librarians/{identifiable}")
+                            .hasAnyAuthority(Role.LIBRARIAN, Role.ROOT_ADMIN, Role.ADMIN)
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
                 )
                 .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)

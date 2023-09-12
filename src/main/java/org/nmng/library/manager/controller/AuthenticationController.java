@@ -1,9 +1,11 @@
 package org.nmng.library.manager.controller;
 
+import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LoginDto;
 import org.nmng.library.manager.dto.response.LoginResponse;
 import org.nmng.library.manager.entity.User;
 import org.nmng.library.manager.security.JwtUtils;
+import org.nmng.library.manager.service.PatronService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -13,10 +15,12 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequestMapping({"/api/auth", "/api/auth/"})
 public class AuthenticationController {
-    AuthenticationManager authenticationManager;
-    JwtUtils jwtUtils;
+    private final PatronService patronService;
+    private final AuthenticationManager authenticationManager;
+    private final JwtUtils jwtUtils;
 
-    public AuthenticationController(AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+    public AuthenticationController(PatronService patronService, AuthenticationManager authenticationManager, JwtUtils jwtUtils) {
+        this.patronService = patronService;
         this.authenticationManager = authenticationManager;
         this.jwtUtils = jwtUtils;
     }
@@ -32,6 +36,11 @@ public class AuthenticationController {
         LoginResponse response = new LoginResponse(user.getUsername(), accessToken);
 
         return ResponseEntity.ok(response);
+    }
+
+    @PostMapping({"/register", "/register/"})
+    public ResponseEntity<?> registerPatron(@RequestBody CreateUserDto dto) {
+        return this.patronService.createUser(dto);
     }
 
 //    @PatchMapping({"/password", "/password/"})

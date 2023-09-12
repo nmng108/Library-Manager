@@ -57,6 +57,8 @@ public class User implements UserDetails {
 
     @Transient
     private List<? extends GrantedAuthority> authorities;
+    @Transient
+    private boolean accountNonLocked = false;
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() { // ?? how to get role?
@@ -70,10 +72,10 @@ public class User implements UserDetails {
         return true;
     }
 
-    @Override
-    public boolean isAccountNonLocked() {
-        return true;
-    }
+//    @Override
+//    public boolean isAccountNonLocked() {
+//        return true;
+//    }
 
     @Override
     public boolean isCredentialsNonExpired() {
