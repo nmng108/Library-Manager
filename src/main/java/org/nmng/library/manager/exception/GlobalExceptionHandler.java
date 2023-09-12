@@ -2,13 +2,18 @@ package org.nmng.library.manager.exception;
 
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.nmng.library.manager.dto.response.CommonResponse;
+import org.nmng.library.manager.dto.response.common.CommonResponse;
+import org.nmng.library.manager.dto.response.common.FailResponse;
 import org.springframework.data.mapping.PropertyReferenceException;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
+import org.springframework.security.authentication.LockedException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.nio.file.NoSuchFileException;
@@ -19,8 +24,21 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
+     *
+     * @param e
+     * @return ResponseEntity with 403 HTTP status
+     */
+    @ExceptionHandler(LockedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    @ResponseBody
+    public CommonResponse handleAccountBeingLockedException(LockedException e) {
+        this.logError(e);
+        return new FailResponse("locked");
+    }
+
+    /**
      * @param e NoSuchFileException
-     * @return 400
+     * @return  400
      */
     @ExceptionHandler(NoSuchFileException.class)
     public ResponseEntity<CommonResponse> handleStoragePathNotFound(NoSuchFileException e) {
@@ -45,7 +63,7 @@ public class GlobalExceptionHandler {
 //    }
 
     /**
-     * Thrown when request data violates the requirements defined with Hibernate validation
+     * Thrown when request data violates the requirements defined with Jpa - Hibernate validation
      *
      * @param e BindException
      * @return 400
@@ -64,7 +82,7 @@ public class GlobalExceptionHandler {
      * @return 400
      */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<CommonResponse> handleUriValidation(ConstraintViolationException e) {
+    public ResponseEntity<CommonResponse> handleUrlValidation(ConstraintViolationException e) {
         this.logError(e);
 
         HashMap<String, String> details = new HashMap<>();

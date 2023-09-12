@@ -1,8 +1,8 @@
 package org.nmng.library.manager.exception;
 
 
-import org.nmng.library.manager.dto.response.CommonResponse;
-import org.nmng.library.manager.dto.response.SuccessState;
+import org.nmng.library.manager.dto.response.common.CommonResponse;
+import org.nmng.library.manager.dto.response.common.FailResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class HttpException extends RuntimeException {
         return ResponseEntity.status(this.httpStatusCode).body(
                 this.errorMessages == null
                         ? null
-                        : CommonResponse.builder().success(SuccessState.FALSE).errors(this.errorMessages).build()
+                        : new FailResponse(this.errorMessages)
         );
     }
 }
