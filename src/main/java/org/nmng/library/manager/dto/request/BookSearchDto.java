@@ -7,11 +7,11 @@ import lombok.Getter;
 @EqualsAndHashCode(callSuper = true)
 @Data
 public class BookSearchDto extends SearchDto {
-    private String id;
+//    private String id;
     private String name;
-    private String category;
+//    private String category;
     private String bookNumber;
     private String authors;
-    private String edition;
+//    private String edition;
     private String publisher;
 }

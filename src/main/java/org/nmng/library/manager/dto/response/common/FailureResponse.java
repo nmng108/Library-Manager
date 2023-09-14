@@ -6,13 +6,13 @@ import org.nmng.library.manager.dto.response.SuccessState;
 
 @Getter
 @Setter
-public class FailResponse extends CommonResponse {
+public class FailureResponse extends CommonResponse {
     private Object errors;
 
     /**
      * @param errors List<T> | single Object T
      */
-    public FailResponse(Object errors) {
+    public FailureResponse(Object errors) {
         super(SuccessState.FALSE);
         this.errors = errors;
     }

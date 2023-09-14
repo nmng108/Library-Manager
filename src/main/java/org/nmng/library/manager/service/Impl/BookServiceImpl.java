@@ -10,6 +10,7 @@ import org.nmng.library.manager.dto.response.common.SuccessResponse;
 import org.nmng.library.manager.entity.Book;
 import org.nmng.library.manager.entity.BookView;
 import org.nmng.library.manager.entity.Category;
+import org.nmng.library.manager.exception.InvalidRequestException;
 import org.nmng.library.manager.model.BookSearchModel;
 import org.nmng.library.manager.service.BookService;
 import org.springframework.http.ResponseEntity;
@@ -33,9 +34,11 @@ public class BookServiceImpl implements BookService {
     public ResponseEntity<?> getAll(BookSearchDto dto) {
         BookSearchModel bookSearch = new BookSearchModel(dto);
         Long counter = dto.getCount() != null
-                ? (dto.getCount().equals(true) ? this.bookViewRepository.countByCriteria(bookSearch) : null)
+                ? (dto.getCount().equals("true") || dto.getCount().isEmpty()
+                    ? this.bookViewRepository.countByCriteria(bookSearch) : null)
                 : null;
-        List<BookView> result = this.bookViewRepository.findByCriteria(bookSearch);
+        List<BookView> result = this.bookViewRepository.findAll();
+//        List<BookView> result = this.bookViewRepository.findByCriteria(bookSearch);
 
         return ResponseEntity.ok(dto.getPage() != null
                 ? new PaginationSuccessResponse<>(true, result, counter, (long) dto.getSize())
@@ -61,11 +64,11 @@ public class BookServiceImpl implements BookService {
         Category category = this.categoryRepository.findByNameIgnoreCase(dto.getMainCategory()).orElse(null);
 
         if (category == null) {
-            return ResponseEntity.badRequest().body("category not found");
+            throw new InvalidRequestException("category not found");
         }
 
         if (this.bookRepository.hasExisted(book.getName(), book.getBookNumber(), book.getAuthors())) {
-            return ResponseEntity.badRequest().body("has existed");
+            throw new InvalidRequestException("has existed");
         }
 
         book.setCategory(category);

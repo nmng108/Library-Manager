@@ -222,6 +222,14 @@ CREATE TABLE IF NOT EXISTS `library-manager`.`request_details` (
     ON UPDATE CASCADE)
 ENGINE = InnoDB;
 
+CREATE ALGORITHM=UNDEFINED DEFINER=`root`@`%` SQL SECURITY DEFINER VIEW `book_category_borrow_time` AS
+select `b`.`id` AS `id`,`b`.`name` AS `name`,`c`.`name` AS `category`,`b`.`quantity` AS `available_quantity`,
+        count(`rd`.`id`) AS `borrow_time`,`b`.`book_number` AS `book_number`,`b`.`authors` AS `authors`,
+        `b`.`edition` AS `edition`,`b`.`publisher` AS `publisher`,`b`.`create_time` AS `create_time`,
+        `b`.`update_time` AS `update_time`
+from ((`books` `b` join `categories` `c` on((`b`.`category_id` = `c`.`id`)))
+left join `request_details` `rd` on((`b`.`id` = `rd`.`book_id`)))
+group by `b`.`id`;
 
 SET SQL_MODE=@OLD_SQL_MODE;
 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS;

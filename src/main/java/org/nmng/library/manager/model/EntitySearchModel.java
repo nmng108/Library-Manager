@@ -14,6 +14,8 @@ import java.util.Map;
 
 @Data
 public abstract class EntitySearchModel<T extends SearchDto> {
+
+
     protected Map<String, Condition> criteria;
     protected boolean usingOr;
     protected Sort sort;

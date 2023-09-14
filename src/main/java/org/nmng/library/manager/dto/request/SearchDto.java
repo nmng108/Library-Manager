@@ -35,7 +35,8 @@ public class SearchDto {
     @Digits(integer = 2, fraction = 0)
     private Integer size;
 
-    private Boolean count;
+    @AcceptedStrings({"true", "false"})
+    private String count;
 
     public Integer getSize() {
         return Objects.isNull(this.page) ? null :

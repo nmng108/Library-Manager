@@ -272,7 +272,7 @@ public class UserServiceImpl implements UserService {
         log.info("loadUserByUsername is called");
 
         if (user == null) {
-            throw new ResponseStatusException(404, "User not found", null);
+            throw new UsernameNotFoundException("User not found");
         }
 
         List<Role> roles = this.roleRepository.findByUser(user);

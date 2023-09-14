@@ -3,12 +3,13 @@ package org.nmng.library.manager.exception;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.nmng.library.manager.dto.response.common.CommonResponse;
-import org.nmng.library.manager.dto.response.common.FailResponse;
+import org.nmng.library.manager.dto.response.common.FailureResponse;
 import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.security.authentication.LockedException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -24,8 +25,19 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
     /**
-     *
-     * @param e
+     * @param e UsernameNotFoundException
+     * @return ResponseEntity with 403 HTTP status
+     */
+    @ExceptionHandler(UsernameNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseBody
+    public CommonResponse handleUsernameNotFoundException(UsernameNotFoundException e) {
+        this.logError(e);
+        return new FailureResponse("User not found");
+    }
+
+    /**
+     * @param e LockedException
      * @return ResponseEntity with 403 HTTP status
      */
     @ExceptionHandler(LockedException.class)
@@ -33,7 +45,7 @@ public class GlobalExceptionHandler {
     @ResponseBody
     public CommonResponse handleAccountBeingLockedException(LockedException e) {
         this.logError(e);
-        return new FailResponse("locked");
+        return new FailureResponse("User is locked");
     }
 
     /**

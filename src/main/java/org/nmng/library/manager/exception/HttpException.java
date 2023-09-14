@@ -2,7 +2,7 @@ package org.nmng.library.manager.exception;
 
 
 import org.nmng.library.manager.dto.response.common.CommonResponse;
-import org.nmng.library.manager.dto.response.common.FailResponse;
+import org.nmng.library.manager.dto.response.common.FailureResponse;
 import org.springframework.http.ResponseEntity;
 
 import java.util.HashMap;
@@ -67,7 +67,7 @@ public class HttpException extends RuntimeException {
         return ResponseEntity.status(this.httpStatusCode).body(
                 this.errorMessages == null
                         ? null
-                        : new FailResponse(this.errorMessages)
+                        : new FailureResponse(this.errorMessages)
         );
     }
 }
