@@ -1,18 +1,13 @@
 package org.nmng.library.manager.dto.request;
 
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
-import org.nmng.library.manager.entity.Role;
 import org.nmng.library.manager.entity.User;
-import org.nmng.library.manager.validator.AcceptedStrings;
-
-import java.util.List;
 
 @Data
-public class CreateUserDto {
+public class CreateLibrarianDto {
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9]{3,16}")
     private String username;
@@ -20,21 +15,21 @@ public class CreateUserDto {
     @Size(min = 3, max = 32)
     private String password;
     @NotBlank
-    @Pattern(regexp = "[A-Za-z]{1,10}( [a-zA-Z]{1,10})*")
+    @Size(min = 5, max = 70)
+    @Pattern(regexp = "[A-Za-z]+( [a-zA-Z]+)*")
     private String fullName;
     @NotBlank
     @Pattern(regexp = "[a-zA-Z0-9]{10,15}")
     private String identity;
     @NotBlank
-    @Pattern(regexp = "[0-9]{10,15}")
+    @Pattern(regexp = "(0|(\\+[0-9]{1,3}))[a-zA-Z0-9]{9,11}")
     private String phone;
-    @Pattern(regexp = "[a-zA-Z0-9]+([._-][a-zA-Z0-9]+){0,3}@[a-zA-Z0-9](\\.[a-zA-Z0-9])*")
+    @Size(min = 5, max = 90)
+    @Pattern(regexp = "[a-zA-Z0-9]{3,}([._-][a-zA-Z0-9]+){0,3}@[a-zA-Z0-9]+(\\.[a-zA-Z0-9]+)*")
     private String email;
+    @Size(max = 120)
     @Pattern(regexp = "(([0-9]+([./][0-9]+))|([A-Za-z]{1,20}))( ?[,.-] ?(([0-9]+([./][0-9]+))|([A-Za-z]{1,20})))*")
     private String address;
-    @NotEmpty
-    @AcceptedStrings({Role.ADMIN, Role.LIBRARIAN, Role.PATRON})
-    private List<String> roles;
 
     public User toUser() {
         User.UserBuilder userBuilder = User.builder()
@@ -44,7 +39,7 @@ public class CreateUserDto {
                 .identityNumber(identity)
                 .phone(this.phone);
 
-        // optional fields
+        // optional attributes
         if (this.email != null) userBuilder.email(this.email);
         if (this.address != null) userBuilder.address(this.address);
 

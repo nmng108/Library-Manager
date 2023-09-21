@@ -9,7 +9,7 @@ public class SuccessResponse extends CommonResponse {
     private Object data;
 
     /**
-     * @param data List<T> | single Object T
+     * @param data Object
      */
     public SuccessResponse(Object data) {
         super(SuccessState.TRUE);

@@ -7,13 +7,15 @@ import org.nmng.library.manager.dto.response.SuccessState;
 @Getter
 @Setter
 public class FailureResponse extends CommonResponse {
-    private Object errors;
+    private ErrorDetails errors;
 
-    /**
-     * @param errors List<T> | single Object T
-     */
-    public FailureResponse(Object errors) {
+    public FailureResponse(String errorCode, String messages) {
         super(SuccessState.FALSE);
-        this.errors = errors;
+        this.errors = new ErrorDetails(errorCode, messages);
+    }
+
+    public FailureResponse(ErrorDetails errorDetails) {
+        super(SuccessState.FALSE);
+        this.errors = errorDetails;
     }
 }
