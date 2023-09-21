@@ -1,6 +1,7 @@
 package org.nmng.library.manager.service.Impl;
 
 import org.nmng.library.manager.dao.UserRepository;
+import org.nmng.library.manager.dto.request.CreateLibrarianDto;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
@@ -54,8 +55,8 @@ public class LibrarianServiceImpl implements LibrarianService {
     }
 
     @Override
-    public ResponseEntity<?> createUser(CreateUserDto dto) {
-        return this.userService.createUser(dto, this.ROLE);
+    public ResponseEntity<?> createUser(CreateLibrarianDto dto) {
+        return this.userService.createUser(dto.toUser(), this.ROLE);
     }
 
     @Override

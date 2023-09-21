@@ -12,10 +12,10 @@ import java.util.List;
 @Table(name = "roles", schema = "library-manager")
 @Data
 public class Role {
-    public static String ROOT_ADMIN = "ROOT_ADMIN";
-    public static String ADMIN = "ADMIN";
-    public static String LIBRARIAN = "LIBRARIAN";
-    public static String PATRON = "PATRON";
+    public static final String ROOT_ADMIN = "ROOT_ADMIN";
+    public static final String ADMIN = "ADMIN";
+    public static final String LIBRARIAN = "LIBRARIAN";
+    public static final String PATRON = "PATRON";
 
     @Column(nullable = false, columnDefinition = "TINYINT(1)")
     @Id

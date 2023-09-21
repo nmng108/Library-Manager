@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service;
 
+import org.nmng.library.manager.dto.request.CreatePatronDto;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.entity.Role;
@@ -15,7 +16,7 @@ public interface PatronService {
 
     ResponseEntity<?> getSpecifiedUser(String identifiable);
 
-    ResponseEntity<?> createUser(CreateUserDto dto);
+    ResponseEntity<?> createUser(CreatePatronDto dto);
 
     ResponseEntity<?> deleteUser(String identifiable);
 

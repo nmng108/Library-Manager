@@ -8,6 +8,6 @@ import java.time.temporal.TemporalUnit;
 
 public final class Policy {
     public static double FINE_PER_INTERVAL = 1000;
-    public static Duration FINE_COUNTING_INTERVAL = Duration.of(21600, ChronoUnit.SECONDS);
+    public static Duration FINE_COUNTING_INTERVAL = Duration.of(86400, ChronoUnit.SECONDS);
 
 }

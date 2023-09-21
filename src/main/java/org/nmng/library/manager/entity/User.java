@@ -2,6 +2,7 @@ package org.nmng.library.manager.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Size;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -25,20 +26,20 @@ public class User implements UserDetails {
     private long id;
 
     @Column(nullable = false, unique = true, length = 16)
-//    @Size(min = 5, max = 16)
+    @Size(min = 3, max = 16)
     private String username;
-    @Column(nullable = false, length = 32)
-//    @Size(min = 3, max = 32)
+    @Column(nullable = false, length = 150)
+    @Size(min = 3, max = 150)
     private String password;
 
     @Column(nullable = false, length = 70)
-//    @Size(min = 3, max = 70)
+    @Size(min = 3, max = 70)
     private String fullName;
     @Column(nullable = false, unique = true, length = 15)
-//    @Size(min = 10, max = 15)
+    @Size(min = 10, max = 15)
     private String identityNumber;
     @Column(nullable = false, length = 15)
-//    @Size(min = 10, max = 15)
+    @Size(min = 10, max = 15)
     private String phone;
     @Column(nullable = true, length = 90)
     private String email;

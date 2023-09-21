@@ -19,7 +19,7 @@ public interface RequestService {
 
     ResponseEntity<?> cancelRequest(String requestIdentifiable);
 
-    void updateExpiredRequest();
+//    void updateExpiredRequest();
 
     ResponseEntity<?> delete(String identifiable);
 

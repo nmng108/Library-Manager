@@ -21,19 +21,25 @@ public interface UserService extends UserDetailsService {
 
     ResponseEntity<?> getSpecifiedUser(String identifiable);
 
-    ResponseEntity<?> getSpecifiedUser(String identifiable, Role role);
+    ResponseEntity<?> getSpecifiedUser(String identifiable, Role serviceRole);
 
     ResponseEntity<?> createUser(CreateUserDto dto);
 
-    ResponseEntity<?> createUser(CreateUserDto dto, Role role);
+    ResponseEntity<?> createUser(User user, Role serviceRole);
 
     ResponseEntity<?> deleteUser(String identifiable);
 
-    ResponseEntity<?> deleteUser(String identifiable, Role role);
+    ResponseEntity<?> deleteUser(String identifiable, Role serviceRole);
 
-    default ResponseEntity<?> lockUser(LockUserDto dto, Role role) {
+    /**
+     * Lock the user that has serviceRole
+     * @param dto LockUserDto
+     * @param serviceRole role corresponding to API. E.g. /api/librarians -> serviceRole = LIBRARIAN
+     * @return ResponseEntity
+     */
+    default ResponseEntity<?> lockUser(LockUserDto dto, Role serviceRole) {
         if (dto == null) throw new InvalidRequestException("Identifiable not found");
-        if (role == null) throw new InternalServerException("Role not found");
+        if (serviceRole == null) throw new InternalServerException("Role not found");
 
         return null;
     }
@@ -42,7 +48,7 @@ public interface UserService extends UserDetailsService {
 
     User findUser(String identifiable);
 
-    User findUser(String identifiable, Role role);
+    User findUser(String identifiable, Role serviceRole);
 
     List<Role> queryRoles(List<String> roleNames);
 

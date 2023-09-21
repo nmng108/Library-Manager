@@ -26,31 +26,32 @@ import java.util.stream.Collectors;
 public class GlobalExceptionHandler {
     /**
      * @param e UsernameNotFoundException
-     * @return ResponseEntity with 403 HTTP status
+     * @return 401 HTTP status
      */
     @ExceptionHandler(UsernameNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
     @ResponseBody
     public CommonResponse handleUsernameNotFoundException(UsernameNotFoundException e) {
         this.logError(e);
-        return new FailureResponse("User not found");
+        return new FailureResponse("E11", "User not found");
     }
 
     /**
      * @param e LockedException
-     * @return ResponseEntity with 403 HTTP status
+     * @return 403 HTTP status
      */
     @ExceptionHandler(LockedException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
     @ResponseBody
     public CommonResponse handleAccountBeingLockedException(LockedException e) {
         this.logError(e);
-        return new FailureResponse("User is locked");
+        return new FailureResponse("E21", "User is locked");
     }
 
     /**
+     * Identical to ResourceNotFoundException
      * @param e NoSuchFileException
-     * @return  400
+     * @return 400 HTTP status
      */
     @ExceptionHandler(NoSuchFileException.class)
     public ResponseEntity<CommonResponse> handleStoragePathNotFound(NoSuchFileException e) {
@@ -75,8 +76,7 @@ public class GlobalExceptionHandler {
 //    }
 
     /**
-     * Thrown when request data violates the requirements defined with Jpa - Hibernate validation
-     *
+     * Thrown when request data violates the constraints defined with Jpa - Hibernate validation
      * @param e BindException
      * @return 400
      */
@@ -121,6 +121,7 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Manually thrown when the resource is not found
      * @param e
      * @return
      */
@@ -145,7 +146,7 @@ public class GlobalExceptionHandler {
     /**
      * A common Http exception thrown manually in code
      *
-     * @param e
+     * @param e HttpException
      * @return
      */
     @ExceptionHandler(HttpException.class)
@@ -168,7 +169,7 @@ public class GlobalExceptionHandler {
         // trace error
         e.printStackTrace();
 
-        return new HttpException().toResponse();
+        return new InternalServerException().toResponse();
     }
 
     private void logError(Exception e) {

@@ -13,15 +13,15 @@ import org.nmng.library.manager.entity.*;
 import org.nmng.library.manager.exception.InvalidRequestException;
 import org.nmng.library.manager.exception.ResourceNotFoundException;
 import org.nmng.library.manager.service.UserService;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import org.springframework.web.server.ResponseStatusException;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -44,9 +44,10 @@ public class UserServiceImpl implements UserService {
         this.userRoleRepository = userRoleRepository;
         this.roleRepository = roleRepository;
         this.requestRepository = requestRepository;
-//        this.passwordEncoder = passwordEncoder;
     }
 
+    @Lazy
+    @Autowired
     public void setPasswordEncoder(PasswordEncoder passwordEncoder) {
         this.passwordEncoder = passwordEncoder;
     }
@@ -84,8 +85,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> getSpecifiedUser(String identifiable, Role role) {
-        User user = this.findUser(identifiable, role);
+    public ResponseEntity<?> getSpecifiedUser(String identifiable, Role serviceRole) {
+        User user = this.findUser(identifiable, serviceRole);
 
         return user == null ?
                 ResponseEntity.notFound().build()
@@ -113,17 +114,21 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> createUser(CreateUserDto dto, Role role) {
-        User user = dto.toUser();
+    public ResponseEntity<?> createUser(User user, Role serviceRole) {
+        User existedUser = this.userRepository.findByUsername(user.getUsername()).orElse(
+                this.userRepository.findByIdentityNumber(user.getIdentityNumber()).orElse(null)
+        );
 
-        user.setPassword(this.passwordEncoder.encode(dto.getPassword()));
-        user = this.userRepository.save(user);
+        if (existedUser != null) throw new InvalidRequestException("User has existed");
 
-        UserRole userRole = this.userRoleRepository.save(new UserRole(user, role));
+        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
+        log.info("new password: {}", this.passwordEncoder.encode(user.getPassword()));
+        User savedUser = this.userRepository.save(user);
+        UserRole userRole = this.userRoleRepository.save(new UserRole(savedUser, serviceRole));
 
-        user.setRoles(List.of(userRole));
+        savedUser.setRoles(List.of(userRole));
 
-        return ResponseEntity.ok(new UserDto(user));
+        return ResponseEntity.ok(new UserDto(savedUser));
     }
 
     @Override
@@ -150,8 +155,8 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public ResponseEntity<?> deleteUser(String identifiable, Role role) {
-        User user = this.findUser(identifiable, role);
+    public ResponseEntity<?> deleteUser(String identifiable, Role serviceRole) {
+        User user = this.findUser(identifiable, serviceRole);
 
         if (user != null) this.userRepository.delete(user);
         else return ResponseEntity.noContent().build();
@@ -162,15 +167,9 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<?> lockUser(LockUserDto dto, Role serviceRole) {
         UserService.super.lockUser(dto, serviceRole);
-        User user = this.findUser(dto.getIdentifiable());
+        User user = this.findUser(dto.getIdentifiable(), serviceRole);
 
         if (user == null) {
-            throw new ResourceNotFoundException("User not found");
-        }
-
-        List<Role> userRoles = this.roleRepository.findByUser(user);
-
-        if (userRoles.stream().noneMatch(role -> role.getName().equalsIgnoreCase(serviceRole.getName()))) {
             throw new ResourceNotFoundException("User not found");
         }
 
@@ -218,19 +217,19 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public User findUser(String identifiable, Role role) {
+    public User findUser(String identifiable, Role serviceRole) {
         Optional<User> user = Optional.empty();
 
         try {
             long id = Long.parseUnsignedLong(identifiable);
-            user = this.userRepository.findByIdAndRole(id, role);
+            user = this.userRepository.findByIdAndRole(id, serviceRole);
         } catch (NumberFormatException ignored) {
         }
 
         // should throw not found exception
         return user.orElse(
-                this.userRepository.findByUsernameAndRole(identifiable, role).orElse(
-                        this.userRepository.findByIdentityNumberAndRole(identifiable, role).orElse(null)
+                this.userRepository.findByUsernameAndRole(identifiable, serviceRole).orElse(
+                        this.userRepository.findByIdentityNumberAndRole(identifiable, serviceRole).orElse(null)
                 )
         );
     }

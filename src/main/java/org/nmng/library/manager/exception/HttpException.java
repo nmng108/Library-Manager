@@ -2,25 +2,27 @@ package org.nmng.library.manager.exception;
 
 
 import org.nmng.library.manager.dto.response.common.CommonResponse;
+import org.nmng.library.manager.dto.response.common.ErrorDetails;
 import org.nmng.library.manager.dto.response.common.FailureResponse;
 import org.springframework.http.ResponseEntity;
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class HttpException extends RuntimeException {
     protected int httpStatusCode = 500;
-    protected Map<String, Object> errorMessages = null;
+    protected ErrorDetails errorDetails = null;
 
     // response without body
     public HttpException() {
         super();
     }
+    // response without body
 
     public HttpException(Throwable throwable) {
         super(throwable);
     }
 
+    // response without body
     public HttpException(String responseMessage, Throwable throwable) {
         super(responseMessage, throwable);
     }
@@ -36,6 +38,7 @@ public class HttpException extends RuntimeException {
         this.httpStatusCode = httpStatusCode;
     }
 
+    // response without body
     public HttpException(int httpStatusCode, Throwable throwable) {
         super(throwable);
 
@@ -48,26 +51,24 @@ public class HttpException extends RuntimeException {
 
     public HttpException(int httpStatusCode, String errorCode) {
         this(httpStatusCode);
-        this.errorMessages = new HashMap<>();
-        this.errorMessages.put("errorCode", errorCode);
+        this.errorDetails = new ErrorDetails(errorCode, null);
     }
 
     public HttpException(int httpStatusCode, String errorCode, String message) {
         this(httpStatusCode, errorCode);
-
-        this.errorMessages.put("details", message);
+        this.errorDetails.setMessages(message);
     }
 
     public HttpException(int httpStatusCode, String errorCode, Map<String, String> messages) {
         this(httpStatusCode, errorCode);
-        this.errorMessages.put("details", messages);
+        this.errorDetails.setMessages(messages);
     }
 
     public ResponseEntity<CommonResponse> toResponse() {
         return ResponseEntity.status(this.httpStatusCode).body(
-                this.errorMessages == null
+                this.errorDetails == null
                         ? null
-                        : new FailureResponse(this.errorMessages)
+                        : new FailureResponse(this.errorDetails)
         );
     }
 }

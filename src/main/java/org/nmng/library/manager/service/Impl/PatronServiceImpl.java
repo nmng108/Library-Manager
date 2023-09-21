@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service.Impl;
 
+import org.nmng.library.manager.dto.request.CreatePatronDto;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.entity.Role;
@@ -49,8 +50,9 @@ public class PatronServiceImpl implements PatronService {
     }
 
     @Override
-    public ResponseEntity<?> createUser(CreateUserDto dto) {
-        return this.userService.createUser(dto, this.ROLE);
+    public ResponseEntity<?> createUser(CreatePatronDto dto) {
+
+        return this.userService.createUser(dto.toUser(), this.ROLE);
     }
 
     @Override

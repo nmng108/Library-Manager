@@ -4,12 +4,12 @@ import org.nmng.library.manager.entity.Role;
 import org.nmng.library.manager.entity.User;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.rest.core.annotation.RepositoryRestResource;
+//import org.springframework.data.rest.core.annotation.RepositoryRestResource;
 
 import java.util.List;
 import java.util.Optional;
 
-@RepositoryRestResource(path = "users")
+//@RepositoryRestResource(path = "users")
 public interface UserRepository extends JpaRepository<User, Long> {
     @Query("SELECT u FROM User u JOIN u.roles ur JOIN ur.role r WHERE r = ?1")
     List<User> findByRole(Role role);

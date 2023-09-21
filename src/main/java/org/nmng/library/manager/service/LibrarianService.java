@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service;
 
+import org.nmng.library.manager.dto.request.CreateLibrarianDto;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LockUserDto;
 import org.nmng.library.manager.dto.response.UserDto;
@@ -18,7 +19,7 @@ public interface LibrarianService {
 
     ResponseEntity<?> getSpecifiedUser(String identifiable);
 
-    ResponseEntity<?> createUser(CreateUserDto dto);
+    ResponseEntity<?> createUser(CreateLibrarianDto dto);
 
     ResponseEntity<?> deleteUser(String identifiable);
 

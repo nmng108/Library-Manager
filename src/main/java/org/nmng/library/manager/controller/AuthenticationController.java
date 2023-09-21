@@ -1,6 +1,7 @@
 package org.nmng.library.manager.controller;
 
 import org.nmng.library.manager.dao.UserRepository;
+import org.nmng.library.manager.dto.request.CreatePatronDto;
 import org.nmng.library.manager.dto.request.CreateUserDto;
 import org.nmng.library.manager.dto.request.LoginDto;
 import org.nmng.library.manager.dto.response.LoginResponse;
@@ -59,7 +60,7 @@ public class AuthenticationController {
     }
 
     @PostMapping({"/register", "/register/"})
-    public ResponseEntity<?> registerPatron(@RequestBody CreateUserDto dto) {
+    public ResponseEntity<?> registerPatron(@RequestBody CreatePatronDto dto) {
         return this.patronService.createUser(dto);
     }
 

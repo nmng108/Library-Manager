@@ -10,8 +10,8 @@ public class InvalidRequestException extends HttpException {
         super(HTTP_STATUS_CODE, ERROR_CODE, message);
     }
 
-    public InvalidRequestException(Map<String, String> details) {
-        super(HTTP_STATUS_CODE, ERROR_CODE, details);
+    public InvalidRequestException(Map<String, String> messages) {
+        super(HTTP_STATUS_CODE, ERROR_CODE, messages);
     }
 
 //    public InvalidRequestException(List<FieldError> fieldExceptions) {
@@ -22,7 +22,7 @@ public class InvalidRequestException extends HttpException {
 //
 //    public ResponseEntity<CommonResponse> toResponse() {
 //        return ResponseEntity.badRequest().body(
-//                CommonResponse.builder().success(SuccessState.FALSE).errors(this.errorMessages).build()
+//                CommonResponse.builder().success(SuccessState.FALSE).errors(this.errorDetails).build()
 //        );
 //    }
 }

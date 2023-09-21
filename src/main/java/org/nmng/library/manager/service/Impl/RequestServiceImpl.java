@@ -1,5 +1,6 @@
 package org.nmng.library.manager.service.Impl;
 
+import lombok.extern.slf4j.Slf4j;
 import org.nmng.library.manager.dao.RequestDetailRepository;
 import org.nmng.library.manager.dao.RequestRepository;
 import org.nmng.library.manager.dao.RequestStatusRepository;
@@ -17,10 +18,10 @@ import org.springframework.web.server.ResponseStatusException;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 
 @Service
+@Slf4j
 public class RequestServiceImpl implements RequestService {
     private final UserService userService;
     private final BookService bookService;
@@ -173,8 +174,8 @@ public class RequestServiceImpl implements RequestService {
         return ResponseEntity.ok(new RequestDto(request));
     }
 
-    @Scheduled(fixedRate = 5000)
-    @Override
+    @Scheduled(fixedRate = 86400)
+//    @Override
     public void updateExpiredRequest() {
         List<Request> expiredRequests = this.requestRepository.findByStatus(this.EXPIRED_STATUS);
         List<Request> borrowingRequests = this.requestRepository.findByStatus(this.BORROWING_STATUS);
@@ -191,10 +192,12 @@ public class RequestServiceImpl implements RequestService {
             long numberOfIntervals = duration.getSeconds() / Policy.FINE_COUNTING_INTERVAL.getSeconds();
 
             request.setFine(numberOfIntervals * Policy.FINE_PER_INTERVAL);
-//            System.out.printf("Expired request %s: update time is %s, total fine of request is %s%n",
-//                    request.getId(),
-//                    request.getUpdateTime(),
-//                    request.getFine());
+
+            log.info("Expired request {}: update time is {}, total fine of request is {}",
+                    request.getId(),
+                    request.getUpdateTime(),
+                    request.getFine()
+            );
         });
 
         borrowingRequests.forEach(request -> {
