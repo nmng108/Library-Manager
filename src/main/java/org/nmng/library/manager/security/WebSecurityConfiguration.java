@@ -1,74 +1,115 @@
 package org.nmng.library.manager.security;
 
+import lombok.extern.java.Log;
+import org.nmng.library.manager.dao.UserRepository;
 import org.nmng.library.manager.entity.Role;
-import org.nmng.library.manager.filter.JwtVerificationFilter;
 import org.nmng.library.manager.service.Impl.UserServiceImpl;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
-import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.core.userdetails.User;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.crypto.factory.PasswordEncoderFactories;
-import org.springframework.security.crypto.password.NoOpPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
-import org.springframework.security.crypto.password.StandardPasswordEncoder;
-import org.springframework.security.provisioning.InMemoryUserDetailsManager;
 import org.springframework.security.web.AuthenticationEntryPoint;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.savedrequest.HttpSessionRequestCache;
+import org.springframework.security.web.savedrequest.RequestCacheAwareFilter;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RegexRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 public class WebSecurityConfiguration {
     private final AuthenticationEntryPoint authenticationEntryPoint;
     private final UserDetailsService userDetailsService;
-    private final JwtVerificationFilter jwtVerificationFilter;
+    private final AuthenticationConfiguration authenticationConfiguration;
+    private LoginAuthenticationFilter loginAuthenticationFilter;
+    private JwtAuthenticationFilter jwtAuthenticationFilter;
+    private final UserRepository userRepository;
 
     public WebSecurityConfiguration(JwtAuthenticationEntryPoint authenticationEntryPoint,
                                     UserServiceImpl userService,
-                                    JwtVerificationFilter jwtVerificationFilter
+                                    UserRepository userRepository,
+                                    AuthenticationConfiguration authenticationConfiguration
     ) {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.userDetailsService = userService;
-        this.jwtVerificationFilter = jwtVerificationFilter;
+        this.userRepository = userRepository;
+        this.authenticationConfiguration = authenticationConfiguration;
     }
 
-//    @Bean
-//    UserDetailsService userDetailsService() {
-//        InMemoryUserDetailsManager manager = new InMemoryUserDetailsManager();
-//        manager.createUser(User.builder().username("lib").password("1").roles(Role.LIBRARIAN).build());
-//        manager.createUser(User.builder().username("patron").password("2").roles("PATRON").build());
-//
-//        return manager;
-//    }
+    /**
+     * Circular dependence, where this Configuration (and its Beans) must be instantiated before JwtAuthenticationFilter
+     */
+    @Lazy
+    @Autowired
+    public void setJwtAuthenticationFilter(JwtAuthenticationFilter jwtAuthenticationFilter) {
+        this.jwtAuthenticationFilter = jwtAuthenticationFilter;
+    }
+
+    /**
+     * Circular dependence, where this Configuration (and its Beans) must be instantiated before LoginAuthenticationFilter
+     */
+    @Lazy
+    @Autowired
+    public void setLoginAuthenticationFilter(LoginAuthenticationFilter loginAuthenticationFilter) {
+        this.loginAuthenticationFilter = loginAuthenticationFilter;
+    }
+
+    /**
+     * Prevent auto-registering JwtAuthenticationFilter to the main Filter chain, which leads to duplicate the filter
+     */
+    @Bean
+    public FilterRegistrationBean<JwtAuthenticationFilter> configureJwtAuthenticationFilter(JwtAuthenticationFilter filter) {
+        FilterRegistrationBean<JwtAuthenticationFilter> registrationBean = new FilterRegistrationBean<>(filter);
+        registrationBean.setEnabled(false);
+
+        return registrationBean;
+    }
+
+    /**
+     * Prevent auto-registering LoginAuthenticationFilter to the main Filter chain, which leads to duplicate the filter
+     */
+    @Bean
+    public FilterRegistrationBean<LoginAuthenticationFilter> configureLoginAuthenticationFilter(LoginAuthenticationFilter filter) {
+        FilterRegistrationBean<LoginAuthenticationFilter> registrationBean = new FilterRegistrationBean<>(filter);
+        registrationBean.setEnabled(false);
+
+        return registrationBean;
+    }
+
+    /**
+     * Additional provider for authenticating user with a jwt
+     */
+    @Bean
+    public JwtAuthenticationProvider instantiateJwtAuthenticationProvider() {
+        JwtAuthenticationProvider provider = new JwtAuthenticationProvider();
+        provider.setUserDetailsService(userDetailsService);
+        provider.setUserRepository(this.userRepository);
+
+        return provider;
+    }
+
+    /**
+     * Declare a global AuthenticationManager bean
+     */
+    @Bean
+    public AuthenticationManager authenticationManager() throws Exception {
+        return this.authenticationConfiguration.getAuthenticationManager();
+    }
 
     @Bean
     public PasswordEncoder passwordEncoder() {
         return PasswordEncoderFactories.createDelegatingPasswordEncoder();
-    }
-
-    @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration authConfig) throws Exception {
-        return authConfig.getAuthenticationManager();
-    }
-
-    @Bean
-    public FilterRegistrationBean<JwtVerificationFilter> registerJwtFilter(JwtVerificationFilter filter) {
-        FilterRegistrationBean<JwtVerificationFilter> registrationBean = new FilterRegistrationBean<>(filter);
-        registrationBean.setEnabled(false);
-
-        return registrationBean;
     }
 
     @Bean
@@ -78,13 +119,15 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(AntPathRequestMatcher.antMatcher("/login")).anonymous()
-                        .requestMatchers(AntPathRequestMatcher.antMatcher("/register")).anonymous()
-                        .requestMatchers(AntPathRequestMatcher.antMatcher("/password")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/login")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/register")).permitAll()
+                        .requestMatchers(AntPathRequestMatcher.antMatcher("/api/auth/password")).permitAll()
                         .anyRequest().permitAll()
                 )
-                .addFilterBefore(this.jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class)
-                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.loginAuthenticationFilter, AuthorizationFilter.class)
+//                .addFilterAfter(this.jwtAuthenticationFilter, LoginAuthenticationFilter.class)
+//                .authenticationManager(this.authenticationManager)
+//                .userDetailsService(this.userDetailsService)
         ;
 
         return httpSecurity.build();
@@ -97,14 +140,14 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET).permitAll()
-                        .requestMatchers(HttpMethod.POST).hasAnyAuthority(Role.LIBRARIAN)
-                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
-                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
-                        .anyRequest().authenticated()
+                                .requestMatchers(HttpMethod.GET).permitAll()
+//                        .requestMatchers(HttpMethod.POST).hasAnyAuthority(Role.LIBRARIAN)
+//                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
+//                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
+                                .anyRequest().hasAnyAuthority(Role.LIBRARIAN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, UsernamePasswordAuthenticationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterAfter(this.jwtAuthenticationFilter, RequestCacheAwareFilter.class)
+                .requestCache(cache -> cache.requestCache(new HttpSessionRequestCache()))
         ;
 
         return httpSecurity.build();
@@ -117,14 +160,13 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET).permitAll()
-                        .requestMatchers(HttpMethod.POST).hasAuthority(Role.LIBRARIAN)
-                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
-                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
-                        .anyRequest().authenticated()
+                                .requestMatchers(HttpMethod.GET).permitAll()
+//                        .requestMatchers(HttpMethod.POST).hasAuthority(Role.LIBRARIAN)
+//                        .requestMatchers(HttpMethod.PATCH).hasAnyAuthority(Role.LIBRARIAN)
+//                        .requestMatchers(HttpMethod.DELETE).hasAnyAuthority(Role.LIBRARIAN)
+                                .anyRequest().hasAnyAuthority(Role.LIBRARIAN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.jwtAuthenticationFilter, AuthorizationFilter.class)
         ;
 
         return httpSecurity.build();
@@ -140,8 +182,7 @@ public class WebSecurityConfiguration {
                         .requestMatchers(HttpMethod.GET).hasAnyAuthority(Role.LIBRARIAN, Role.ADMIN, Role.ROOT_ADMIN)
                         .anyRequest().hasAuthority(Role.LIBRARIAN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.jwtAuthenticationFilter, AuthorizationFilter.class)
         ;
 
         return httpSecurity.build();
@@ -154,11 +195,10 @@ public class WebSecurityConfiguration {
                 .exceptionHandling(handler -> handler.authenticationEntryPoint(this.authenticationEntryPoint))
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
-                        .requestMatchers(HttpMethod.GET, "/api/patrons/*").authenticated()
+                        .requestMatchers(HttpMethod.GET, "/api/patrons/*").hasAnyAuthority(Role.PATRON, Role.LIBRARIAN, Role.ADMIN, Role.ROOT_ADMIN)
                         .anyRequest().hasAnyAuthority(Role.LIBRARIAN, Role.ADMIN, Role.ROOT_ADMIN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.jwtAuthenticationFilter, AuthorizationFilter.class)
         ;
 
         return httpSecurity.build();
@@ -172,11 +212,10 @@ public class WebSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(authorize -> authorize
                         .requestMatchers(HttpMethod.GET, "/api/librarians/{identifiable}")
-                            .hasAnyAuthority(Role.LIBRARIAN, Role.ROOT_ADMIN, Role.ADMIN)
+                        .hasAnyAuthority(Role.LIBRARIAN, Role.ROOT_ADMIN, Role.ADMIN)
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.jwtAuthenticationFilter, AuthorizationFilter.class)
         ;
 
         return httpSecurity.build();
@@ -191,8 +230,7 @@ public class WebSecurityConfiguration {
                 .authorizeHttpRequests(authorize -> authorize
                         .anyRequest().hasAnyAuthority(Role.ROOT_ADMIN, Role.ADMIN)
                 )
-                .addFilterBefore(this.jwtVerificationFilter, AuthorizationFilter.class)
-//                .userDetailsService(this.userDetailsService)
+                .addFilterBefore(this.jwtAuthenticationFilter, AuthorizationFilter.class)
         ;
 
         return httpSecurity.build();

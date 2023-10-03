@@ -27,33 +27,55 @@ public class JwtUtils {
 
     }
 
-    public boolean validateAccessToken(String token) {
+    public Claims parseJwt(String token) {
+        try {
+            return Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token).getBody();
+        } catch (IllegalArgumentException e) {
+            log.info("Token is null, empty or only whitespace");
+        } catch (MalformedJwtException e) {
+            log.info("JWT is invalid", e);
+        } catch (UnsupportedJwtException e) {
+            log.info("JWT is not supported", e);
+        } catch (SignatureException e) {
+            log.info("Signature validation failed");
+        } catch (ExpiredJwtException e) {
+            log.info("JWT expired");
+        }
+
+        return null;
+    }
+
+    public boolean isAccessTokenValid(String token) {
         try {
             Jwts.parser().setSigningKey(SECRET_KEY).parseClaimsJws(token);
             return true;
-        } catch (ExpiredJwtException ex) {
-            log.error("JWT expired");
-        } catch (IllegalArgumentException ex) {
-            log.error("Token is null, empty or only whitespace");
-        } catch (MalformedJwtException ex) {
-            log.error("JWT is invalid", ex);
-        } catch (UnsupportedJwtException ex) {
-            log.error("JWT is not supported", ex);
-        } catch (SignatureException ex) {
-            log.error("Signature validation failed");
+        } catch (IllegalArgumentException e) {
+            log.info("Token is null, empty or only whitespace");
+            throw e;
+        } catch (MalformedJwtException e) {
+            log.info("JWT is invalid", e);
+            throw e;
+        } catch (UnsupportedJwtException e) {
+            log.info("JWT is not supported", e);
+            throw e;
+        } catch (SignatureException e) {
+            log.info("Signature validation failed");
+            throw e;
+        } catch (ExpiredJwtException e) {
+            log.info("JWT expired");
+            throw e;
         }
 
-        return false;
+//        return false;
     }
 
     public String getSubject(String token) {
-        return parseClaims(token).getSubject();
+        Claims claims = this.parseJwt(token);
+
+        return claims != null ? claims.getSubject() : null;
     }
 
-    private Claims parseClaims(String token) {
-        return Jwts.parser()
-                .setSigningKey(SECRET_KEY)
-                .parseClaimsJws(token)
-                .getBody();
-    }
+//    private Claims parseClaims(Jwt<?, Claims> token) {
+//        return token.getBody();
+//    }
 }

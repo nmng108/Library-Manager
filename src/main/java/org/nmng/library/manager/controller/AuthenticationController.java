@@ -37,27 +37,27 @@ public class AuthenticationController {
         this.jwtUtils = jwtUtils;
     }
 
-    @PostMapping({"/login", "/login/"})
-    @Transactional
-    public ResponseEntity<?> login(@RequestBody LoginDto dto) {
-        User user = (User) this.userService.loadUserByUsername(dto.getUsername());
-
-        if (user == null) throw new HttpException(401, "username or password is wrong");
-        // check if user's lock mode has expired. If true, then unlock and allow user to login
-        if (user.isLocked() && LocalDateTime.now().isAfter(user.getLockExpirationDate())) {
-            user.setLocked(false);
-            this.userRepository.save(user);
-        } else if (user.isLocked()) {}
-
-        Authentication authentication = this.authenticationManager.authenticate(
-                new UsernamePasswordAuthenticationToken(user, dto.getPassword())
-        );
-
-        String accessToken = jwtUtils.generateAccessToken(user);
-        LoginResponse response = new LoginResponse(user.getUsername(), accessToken);
-
-        return ResponseEntity.ok(response);
-    }
+//    @PostMapping({"/login", "/login/"})
+//    @Transactional
+//    public ResponseEntity<?> login(@RequestBody LoginDto dto) {
+//        User user = (User) this.userService.loadUserByUsername(dto.getUsername());
+//
+//        if (user == null) throw new HttpException(401, "username or password is wrong");
+//        // check if user's lock mode has expired. If true, then unlock and allow user to login
+//        if (user.isLocked() && LocalDateTime.now().isAfter(user.getLockExpirationDate())) {
+//            user.setLocked(false);
+//            this.userRepository.save(user);
+//        } else if (user.isLocked()) {}
+//
+//        Authentication authentication = this.authenticationManager.authenticate(
+//                new UsernamePasswordAuthenticationToken(user, dto.getPassword())
+//        );
+//
+//        String accessToken = jwtUtils.generateAccessToken(user);
+//        LoginResponse response = new LoginResponse(accessToken);
+//
+//        return ResponseEntity.ok(response);
+//    }
 
     @PostMapping({"/register", "/register/"})
     public ResponseEntity<?> registerPatron(@RequestBody CreatePatronDto dto) {

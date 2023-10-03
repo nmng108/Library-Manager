@@ -174,7 +174,7 @@ public class RequestServiceImpl implements RequestService {
         return ResponseEntity.ok(new RequestDto(request));
     }
 
-    @Scheduled(fixedRate = 86400)
+//    @Scheduled(fixedRate = 86400)
 //    @Override
     public void updateExpiredRequest() {
         List<Request> expiredRequests = this.requestRepository.findByStatus(this.EXPIRED_STATUS);
